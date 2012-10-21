@@ -3,6 +3,7 @@ define(['agenda-charts', '../lib/reqwest', '../lib/when'], function (Charts, Req
     var Model = {
             get : function (url) {
                 var deferred = When.defer();
+                //TODO: consider using d3.xhr
                 Reqwest({
                     url     : url,
                     type    : 'jsonp',
