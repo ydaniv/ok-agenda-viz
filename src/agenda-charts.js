@@ -133,10 +133,11 @@ define(['../lib/d3.v2'], function () {
             this.data = data.map(function(party) {
                 // value | 0 is the same as Math.round(value)
                 return [
-                    party.score | 0,
-                    party.volume | 0,
-                    party.size | 0,
-                    party.name
+                    party.score | 0, //0
+                    party.volume | 0,//1
+                    party.size | 0,  //2
+                    party.name,      //3
+                    party.id         //4
                 ];
             }).sort(function (a, b) {
                 // sort from the large to the small ones, to make sure they don't cover each other entirely
@@ -234,11 +235,12 @@ define(['../lib/d3.v2'], function () {
         setData     : function (data) {
             this.data = data.map(function(member) {
                 return [
-                    member.score,
-                    member.volume,
-                    member.rank,
-                    member.name,
-                    member.party
+                    member.score,   //0
+                    member.volume,  //1
+                    member.rank,    //2
+                    member.name,    //3
+                    member.party,   //4
+                    member.id       //5
                 ];
             }).sort(function (a, b) {
                 return a[0] - b[0];
