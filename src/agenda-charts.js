@@ -240,7 +240,8 @@ define(['../lib/d3.v2'], function () {
                     member.rank,    //2
                     member.name,    //3
                     member.party,   //4
-                    member.id       //5
+                    member.party_id,//5
+                    member.id       //6
                 ];
             }).sort(function (a, b) {
                 return a[0] - b[0];
@@ -267,6 +268,14 @@ define(['../lib/d3.v2'], function () {
 
             this.selection = {
                 all     : null,
+                getParty: function (id) {
+                    if ( !(id in this.parties) ) {
+                        this.parties[id] = this.all.filter(function (d, i) {
+                            return d[5] === id;
+                        });
+                    }
+                    return this.parties[id];
+                },
                 parties : {}
             };
             this.selection.all = this.setScales()
