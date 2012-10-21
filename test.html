@@ -1,8 +1,20 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <link rel="stylesheet" href="src/agenda-viz.css"/>
     <title>Test Page for Open Knesset Agenda Visualization Widget</title>
+    <style>
+        .chart-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+        #members-chart {
+            z-index: 1;
+        }
+        #parties-chart {
+            z-index: 10;
+        }
+    </style>
 </head>
 <body>
     <div id="parties-chart" class="chart-container"></div>
