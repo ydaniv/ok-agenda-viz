@@ -50,6 +50,7 @@ define(['agenda-charts', '../lib/reqwest', '../lib/when'], function (Charts, Req
                             });
                         }
                         selection_parties[party_name].call(members_chart.transition, members_chart);
+                        d3.select(this).call(parties_chart.tooltip, 3);
                     },
                     mouseout    : function (party) {
                         var party_name = party[3];
@@ -63,23 +64,23 @@ define(['agenda-charts', '../lib/reqwest', '../lib/when'], function (Charts, Req
                     },
                     click       : function (party) {
                         var party_name = party[3],
-                            toggles = members_chart.parties_toggle,
-                            selection_parties = members_chart.selection.parties;
+                            toggles = members_chart.parties_toggle;
                         if ( ! (party_name in toggles) ) {
                             members_chart.parties_toggle[party_name] = true;
-                            members_chart.mouseover(party);
+                            parties_chart.mouseover.call(this, party);
                         }
                         else {
                             toggles[party_name] = ! toggles[party_name];
-                            toggles[party_name] ? members_chart.mouseover(party) : members_chart.mouseout(party);
+                            toggles[party_name] ?
+                                parties_chart.mouseover.call(this, party) :
+                                parties_chart.mouseout.call(this, party);
                         }
                     },
                     no_axes     : true
                 }).draw(),
 
                 members_chart = new Charts.MembersChart({
-                    data        : agenda.members
-                    ,
+                    data        : agenda.members,
                     container   : '#members-chart',
                     height      : 300,
                     width       : 800
