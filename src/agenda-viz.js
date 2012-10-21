@@ -1,6 +1,7 @@
 define(['agenda-charts', '../lib/reqwest', '../lib/when'], function (Charts, Reqwest, When) {
 
-    var Model = {
+    var d3 = window.d3,
+        Model = {
             get : function (url) {
                 var deferred = When.defer();
                 //TODO: consider using d3.xhr
@@ -35,28 +36,32 @@ define(['agenda-charts', '../lib/reqwest', '../lib/when'], function (Charts, Req
                 parties_data = agenda.parties.map(function (item, i) {
                     item.size = parties.objects[i].number_of_seats;
                     item.volume = 100;
+                    item.id = parties.objects[i].id;
                     return item;
                 }),
+                members_data = (agenda.parties.forEach(function (party) {
+                    agenda.members.forEach(function (member) {
+                        if ( party.name === member.party ) {
+                            member.party_id = party.id;
+                        }
+                    });
+                }), agenda.members),
+                dispatcher = d3.dispatch('change_party'),
                 parties_chart = new Charts.PartiesChart({
                     data        : parties_data,
                     container   : '#parties-chart',
                     height      : 300,
                     width       : 800,
                     mouseover   : function (party) {
-                        var party_name = party[3],
-                            selection_parties = members_chart.selection.parties;
-                        if ( ! (party_name in selection_parties) ) {
-                            selection_parties[party_name] = members_chart.selection.all.filter(function (d) {
-                                return d[4] === party[3]; // if member.party === party.name
-                            });
-                        }
-                        selection_parties[party_name].call(members_chart.transition, members_chart);
+                        var party_id = party[4];
+                        members_chart.selection.getParty(party_id)
+                                               .call(members_chart.transition, members_chart);
                         d3.select(this).call(parties_chart.tooltip, parties_chart, 3);
                     },
                     mouseout    : function (party) {
-                        var party_name = party[3];
-                        if ( ! members_chart.parties_toggle[party_name] ) {
-                            members_chart.selection.parties[party_name].call(
+                        var party_id = party[4];
+                        if ( ! members_chart.parties_toggle[party_id] ) {
+                            members_chart.selection.parties[party_id].call(
                                 members_chart.transition,
                                 members_chart,
                                 true
@@ -64,15 +69,15 @@ define(['agenda-charts', '../lib/reqwest', '../lib/when'], function (Charts, Req
                         }
                     },
                     click       : function (party) {
-                        var party_name = party[3],
+                        var party_id = party[4],
                             toggles = members_chart.parties_toggle;
-                        if ( ! (party_name in toggles) ) {
-                            members_chart.parties_toggle[party_name] = true;
+                        if ( ! (party_id in toggles) ) {
+                            members_chart.parties_toggle[party_id] = true;
                             parties_chart.mouseover.call(this, party);
                         }
                         else {
-                            toggles[party_name] = ! toggles[party_name];
-                            toggles[party_name] ?
+                            toggles[party_id] = ! toggles[party_id];
+                            toggles[party_id] ?
                                 parties_chart.mouseover.call(this, party) :
                                 parties_chart.mouseout.call(this, party);
                         }
@@ -81,18 +86,34 @@ define(['agenda-charts', '../lib/reqwest', '../lib/when'], function (Charts, Req
                 }).draw(),
 
                 members_chart = new Charts.MembersChart({
-                    data        : agenda.members,
+                    data        : members_data,
                     container   : '#members-chart',
                     height      : 300,
                     width       : 800
                 }).initDraw();
+            
+            dispatcher.on('change_party', function (party_id) {
+                parties_chart.selection.all.each(function (d) {
+                    var id = d[4];
+                    if ( party_id != id && members_chart.parties_toggle[id] ) {
+                        members_chart.parties_toggle[id] = false;
+                        parties_chart.mouseout.call(this, d);
+                    }
+                    if ( party_id == id ) {
+                        members_chart.parties_toggle[id] = true;
+                        parties_chart.mouseover.call(this, d);
+                    }
+                });
+                // toggle all parties
+                parties_chart.selection.all.call(parties_chart.transition, parties_chart, +party_id);
+            });
 
             parties_menu.innerHTML = parties.objects.reduce(function (html, item) {
                 return html + '<option value="' + item.id + '">' + item.name + '</option>';
-            }, '<option id="0">כל המפלגות</option>');
+            }, '<option value="0">כל המפלגות</option>');
             parties_menu.addEventListener('change', function (e) {
                 //TODO: publish an event that transitions current display out and selected display in
-                e.target.value;
+                dispatcher.change_party(e.target.value);
             }, false);
         }
     );
