@@ -31,6 +31,7 @@ define(['agenda-charts', '../lib/reqwest', '../lib/when'], function (Charts, Req
         function (responses) {
             var parties = responses[0],
                 agenda = responses[1],
+                parties_menu = document.getElementById('parties-menu'),
                 parties_data = agenda.parties.map(function (item, i) {
                     item.size = parties.objects[i].number_of_seats;
                     item.volume = 100;
@@ -85,6 +86,14 @@ define(['agenda-charts', '../lib/reqwest', '../lib/when'], function (Charts, Req
                     height      : 300,
                     width       : 800
                 }).initDraw();
+
+            parties_menu.innerHTML = parties.objects.reduce(function (html, item) {
+                return html + '<option value="' + item.id + '">' + item.name + '</option>';
+            }, '<option id="0">כל המפלגות</option>');
+            parties_menu.addEventListener('change', function (e) {
+                //TODO: publish an event that transitions current display out and selected display in
+                e.target.value;
+            }, false);
         }
     );
 });
