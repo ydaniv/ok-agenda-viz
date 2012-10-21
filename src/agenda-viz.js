@@ -50,7 +50,7 @@ define(['agenda-charts', '../lib/reqwest', '../lib/when'], function (Charts, Req
                             });
                         }
                         selection_parties[party_name].call(members_chart.transition, members_chart);
-                        d3.select(this).call(parties_chart.tooltip, 3);
+                        d3.select(this).call(parties_chart.tooltip, parties_chart, 3);
                     },
                     mouseout    : function (party) {
                         var party_name = party[3];

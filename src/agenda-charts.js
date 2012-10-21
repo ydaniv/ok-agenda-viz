@@ -35,6 +35,8 @@ define(['../lib/d3.v2'], function () {
             .append('svg')
             .attr("width", this.width)
             .attr("height", this.height);
+        // cache for tooltips
+        this.tooltips = {};
     }
 
     Chart.prototype = {
@@ -83,9 +85,9 @@ define(['../lib/d3.v2'], function () {
             return this;
         },
         addEvents   : function () {
-            this.svg.selectAll(this.element).on('mouseover', this.mouseover, false);
-            this.svg.selectAll(this.element).on('mouseout', this.mouseout, false);
-            this.svg.selectAll(this.element).on('click', this.click, false);
+            this.svg.selectAll(this.element).on('mouseover', this.mouseover, false)
+                                            .on('mouseout', this.mouseout, false)
+                                            .on('click', this.click, false);
             return this;
         },
         draw        : function () {
@@ -101,6 +103,21 @@ define(['../lib/d3.v2'], function () {
                 all.enter().call(this.transition, this);
             }
             return this;
+        },
+        tooltip     : function (selection, chart, text_index) {
+            var name = selection.data()[0][text_index],
+                tip;
+            if ( ! (name in chart.tooltips) ) {
+                tip = selection.append('title')
+                    .text(name);
+                chart.tooltips[name] = tip;
+            }
+            else {
+                tip = chart.tooltips[name];
+            }
+//            tip.transition()
+//               .duration(300)
+//               .attr('opacity', 1);
         }
     };
 
