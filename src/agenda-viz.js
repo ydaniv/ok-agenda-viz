@@ -52,11 +52,27 @@ define(['agenda-charts', '../lib/reqwest', '../lib/when'], function (Charts, Req
                         selection_parties[party_name].call(members_chart.transition, members_chart);
                     },
                     mouseout    : function (party) {
-                        members_chart.selection.parties[party[3]].call(
-                            members_chart.transition,
-                            members_chart,
-                            true
-                        );
+                        var party_name = party[3];
+                        if ( ! members_chart.parties_toggle[party_name] ) {
+                            members_chart.selection.parties[party_name].call(
+                                members_chart.transition,
+                                members_chart,
+                                true
+                            );
+                        }
+                    },
+                    click       : function (party) {
+                        var party_name = party[3],
+                            toggles = members_chart.parties_toggle,
+                            selection_parties = members_chart.selection.parties;
+                        if ( ! (party_name in toggles) ) {
+                            members_chart.parties_toggle[party_name] = true;
+                            members_chart.mouseover(party);
+                        }
+                        else {
+                            toggles[party_name] = ! toggles[party_name];
+                            toggles[party_name] ? members_chart.mouseover(party) : members_chart.mouseout(party);
+                        }
                     },
                     no_axes     : true
                 }).draw(),

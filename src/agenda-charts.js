@@ -28,6 +28,7 @@ define(['../lib/d3.v2'], function () {
         this.ranges = options.ranges;
         this.mouseover = options.mouseover;
         this.mouseout = options.mouseout;
+        this.click = options.click;
         this.no_axes = options.no_axes;
         // create the chart's canvas
         this.svg = options.svg || d3.select(options.container || 'body')
@@ -84,6 +85,7 @@ define(['../lib/d3.v2'], function () {
         addEvents   : function () {
             this.svg.selectAll(this.element).on('mouseover', this.mouseover, false);
             this.svg.selectAll(this.element).on('mouseout', this.mouseout, false);
+            this.svg.selectAll(this.element).on('click', this.click, false);
             return this;
         },
         draw        : function () {
@@ -207,6 +209,7 @@ define(['../lib/d3.v2'], function () {
         this.bar_padding = options.bar_padding || 1;
         this.stroke = options.stroke || 1;
         this.element = 'rect';
+        this.parties_toggle = {};
     }
 
     MembersChart.prototype = extend(Object.create(Chart.prototype), {
