@@ -1,0 +1,11 @@
+.chart-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+#members-chart {
+    z-index: 1;
+}
+#parties-chart {
+    z-index: 10;
+}
