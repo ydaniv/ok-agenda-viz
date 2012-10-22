@@ -53,34 +53,13 @@ define(['agenda-charts', '../lib/reqwest', '../lib/when'], function (Charts, Req
                     height      : 300,
                     width       : 800,
                     mouseover   : function (party) {
-                        var party_id = party[4];
-                        members_chart.selection.getParty(party_id)
-                                               .call(members_chart.transition, members_chart);
-                        d3.select(this).call(parties_chart.tooltip, parties_chart, 3);
+                        members_chart.show(party[4]);
                     },
                     mouseout    : function (party) {
-                        var party_id = party[4];
-                        if ( ! members_chart.parties_toggle[party_id] ) {
-                            members_chart.selection.parties[party_id].call(
-                                members_chart.transition,
-                                members_chart,
-                                true
-                            );
-                        }
+                        members_chart.hide(party[4]);
                     },
                     click       : function (party) {
-                        var party_id = party[4],
-                            toggles = members_chart.parties_toggle;
-                        if ( ! (party_id in toggles) ) {
-                            members_chart.parties_toggle[party_id] = true;
-                            parties_chart.mouseover.call(this, party);
-                        }
-                        else {
-                            toggles[party_id] = ! toggles[party_id];
-                            toggles[party_id] ?
-                                parties_chart.mouseover.call(this, party) :
-                                parties_chart.mouseout.call(this, party);
-                        }
+                        members_chart.toggle(party[4], true);
                     },
                     no_axes     : true
                 }).draw(),
@@ -90,18 +69,16 @@ define(['agenda-charts', '../lib/reqwest', '../lib/when'], function (Charts, Req
                     container   : '#members-chart',
                     height      : 300,
                     width       : 800
-                }).initDraw();
+                }).render();
             
             dispatcher.on('change_party', function (party_id) {
                 parties_chart.selection.all.each(function (d) {
                     var id = d[4];
                     if ( party_id != id && members_chart.parties_toggle[id] ) {
-                        members_chart.parties_toggle[id] = false;
-                        parties_chart.mouseout.call(this, d);
+                        members_chart.hide(id, true);
                     }
                     if ( party_id == id ) {
-                        members_chart.parties_toggle[id] = true;
-                        parties_chart.mouseover.call(this, d);
+                        members_chart.show(id, true);
                     }
                 });
                 // toggle all parties

@@ -298,7 +298,62 @@ define(['../lib/d3.v2'], function () {
                 .attr('stroke', function(d) {
                     return chart.color_scale(d[0]);
                 });
+            if ( complete ) {
+                this.parties_toggle[0] = true;
+                this.select();
+            }
             this.addEvents();
+            return this;
+        },
+        select      : function (id, dont_set) {
+            var selection = arguments.length ? this.selection.getParty(id) : this.selection.all;
+            if ( ! dont_set ) {
+                this.selection.current = selection;
+            }
+            return selection;
+        },
+        toggle      : function (party, show_hide) {
+            var id;
+            // if party is NOT party_id but a selection
+            id = typeof party === 'number' ? party : party.data()[0][5];
+            // toggle state
+            this.parties_toggle[id] = ! this.parties_toggle[id];
+            // whether to also turn on/off visual state
+            if ( show_hide ) {
+                this.parties_toggle[id] ? this.show(id, true) : this.hide(id, true);
+            }
+            return this;
+        },
+        show        : function (party, override_persist) {
+            var id;
+            // if party is NOT party_id but a selection
+            id = typeof party === 'number' ? party : party.data()[0][5];
+            // get old state
+            // if we're allowed to toggle the persistent state or it's not persistent
+            if ( override_persist || ! this.parties_toggle[id] ) {
+                // turn on persistency if `override_persist` is `true`
+                override_persist && (this.parties_toggle[id] = true);
+                // if toggling to active then select
+                this.select(id, true)
+                    // transition in or out according to new state - `true` => 'out'
+                    .call(this.transition, this);
+            }
+            return this;
+        },
+        hide        : function (party, override_persist) {
+            var id;
+            // if party is NOT party_id but a selection
+            id = typeof party === 'number' ? party : party.data()[0][5];
+            // get old state
+            // if we're allowed to toggle the persistent state or it's not persistent
+            if ( override_persist || ! this.parties_toggle[id] ) {
+                // disable persistency if `override_persist is `true`
+                override_persist && (this.parties_toggle[id] = false);
+                // if toggling to active then select
+                this.select(id, true)
+                    // transition in or out according to new state - `true` => 'out'
+                    .call(this.transition, this, true);
+            }
             return this;
         },
         transition  : function (selection, chart, transit_out) {
