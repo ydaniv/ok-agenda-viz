@@ -93,7 +93,7 @@ define(['../lib/d3.v2'], function () {
         draw        : function () {
             var all, exit, enter;
             if ( ! this.selection ) {
-                this.initDraw()
+                this.render()
                     .selection.all.call(this.transition, this);
             }
             else {
@@ -171,7 +171,7 @@ define(['../lib/d3.v2'], function () {
                 .range([this.r_in_min * 2, this.r_in_max * 2]);
             return this;
         },
-        initDraw    : function () {
+        render      : function (complete) {
             var chart = this;
 
             this.selection = {
@@ -191,8 +191,10 @@ define(['../lib/d3.v2'], function () {
                 })
                 .attr('cy', function(d) {
                     return chart.y_scale(d[1]);
-                })// radii initially set to 0 and then transitioned
-                .attr('r', 0)
+                })// if not `complete` then radii initially set to 0 and then transitioned
+                .attr('r', ! complete ? 0 : function (d) {
+                    chart.r_scale(d[2]);
+                })
                 // paint
                 .attr('fill', function(d) {
                     return chart.color_scale(d[0]);
@@ -255,7 +257,7 @@ define(['../lib/d3.v2'], function () {
             this.y_out_max = y_max == null ? this.padding.y : y_max; 
             return this;
         },
-        initDraw    : function () {
+        render      : function (complete) {
             var chart = this,
                 w = this.width / this.data.length,
                 bar_width = (w - chart.bar_padding - chart.stroke) | 0 || 1;
@@ -282,9 +284,14 @@ define(['../lib/d3.v2'], function () {
                 .attr('x', function(d, i) {
                     return chart.x_scale(d[0]);
                 })
-                .attr('y', chart.height - chart.padding.y)
+                .attr('y', ! complete ? chart.height - chart.padding.y : function(d) {
+                    return chart.y_scale(d[1]);
+                })
                 .attr('width', bar_width)
-                .attr('height', 0)
+                // if not `complete` then height starts at 0 and then transitioned according to chart height and y_scale
+                .attr('height', ! complete ? 0 : function(d) {
+                    return chart.height - chart.padding.y - chart.y_scale(d[1]);
+                })
                 .attr('fill', function(d) {
                     return chart.color_scale(d[0]);
                 })
