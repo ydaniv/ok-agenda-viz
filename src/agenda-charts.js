@@ -40,8 +40,8 @@ define(['../lib/d3.v2'], function () {
     }
 
     Chart.prototype = {
-        constructor : Chart,
-        setScales   : function () {
+        constructor     : Chart,
+        setXDomain      : function () {
             // create a score accessor
             var getScore = prop(0);
             // set X scale min, max and median
@@ -51,26 +51,50 @@ define(['../lib/d3.v2'], function () {
 //            this.x_in_med = (this.x_in_min + this.x_in_max)/2;
 //            this.x_med = d3.median(this.data, getScore);
 //            this.x_med = d3.mean(this.data, getScore);
+            return this;
+        },
+        setYDomain      : function () {
             // set Y scale min and max
             this.y_in_min = 0;
             this.y_in_max = d3.max(this.data, prop(1)); // by volume
-            // set ranges' values
-            this.setRanges();
+            return this;
+        },
+        setDomains      : function () {
+            this.setXDomain()
+                .setYDomain();
+            return this;
+        },
+        setXScale       : function () {
             // set X scale
             this.x_scale = d3.scale.linear()
                 .domain([this.x_in_min, this.x_in_max])
                 .range([this.x_out_min, this.x_out_max]);
+            return this;
+        },
+        setYScale       : function () {
             // set Y scale
             this.y_scale = d3.scale.linear()
                 .domain([this.y_in_min, this.y_in_max])
                 .range([this.y_out_min, this.y_out_max]);
+            // set ranges' values
+            return this;
+        },
+        setColorScale   : function () {
             // set the color scale
             this.color_scale = d3.scale.linear()
                 .domain([this.x_in_min, this.x_in_med, this.x_in_max])
                 .range(['red', 'gray', 'green']);
             return this;
         },
-        createAxes  : function () {
+        setScales       : function () {
+            this.setDomains()
+                .setRanges()
+                .setXScale()
+                .setYScale()
+                .setColorScale();
+            return this;
+        },
+        createAxes      : function () {
             if ( ! this.no_axes ) {
                 // create X axis
                 this.x_axis = d3.svg.axis();
@@ -84,13 +108,13 @@ define(['../lib/d3.v2'], function () {
             }
             return this;
         },
-        addEvents   : function () {
+        addEvents       : function () {
             this.svg.selectAll(this.element).on('mouseover', this.mouseover, false)
                                             .on('mouseout', this.mouseout, false)
                                             .on('click', this.click, false);
             return this;
         },
-        draw        : function () {
+        draw            : function () {
             var all, exit, enter;
             if ( ! this.selection ) {
                 this.render()
@@ -104,7 +128,7 @@ define(['../lib/d3.v2'], function () {
             }
             return this;
         },
-        tooltip     : function (selection, chart, text_index) {
+        tooltip         : function (selection, chart, text_index) {
             var name = selection.data()[0][text_index],
                 tip;
             if ( ! (name in chart.tooltips) ) {
@@ -145,7 +169,7 @@ define(['../lib/d3.v2'], function () {
             });
             return this;
         },
-        setRanges   : function (x_min, x_max, y_min, y_max) {
+        setRanges   : function (x_min, x_max, y_min, y_max, r_min, r_max) {
             // if ranges was set in options
             if ( this.ranges && ! this.ranges_set ) {
                 this.ranges_set = true;
@@ -157,18 +181,20 @@ define(['../lib/d3.v2'], function () {
             this.y_out_min = y_min == null ? this.height - this.padding.y - this.r_in_max * 2 : y_min;
             //TODO: just placing them in the middle for now until we have proper volume - then change range's max
             this.y_out_max = y_max == null ? this.height / 2 : y_max;
+            this.r_out_min = r_min == null ? this.r_in_min * 2 : r_min;
+            this.r_out_max = r_max == null ? this.r_in_max * 2 : r_max;
             return this;
         },
         setScales   : function () {
             var getSize = prop(2);
             // set R scale min and max
-            this.r_in_max = d3.max(this.data, getSize); // by size
-            this.r_in_min = d3.min(this.data, getSize); // by size
+            this.r_in_max = d3.max(this.data, getSize);
+            this.r_in_min = d3.min(this.data, getSize);
             Chart.prototype.setScales.call(this);
             // set R scale
             this.r_scale = d3.scale.linear()
                 .domain([this.r_in_min, this.r_in_max])
-                .range([this.r_in_min * 2, this.r_in_max * 2]);
+                .range([this.r_out_min, this.r_out_max]);
             return this;
         },
         render      : function (complete) {
@@ -392,5 +418,5 @@ define(['../lib/d3.v2'], function () {
     return {
         PartiesChart: PartiesChart,
         MembersChart: MembersChart
-    }
+    };
 });
