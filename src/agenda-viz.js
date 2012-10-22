@@ -47,9 +47,9 @@ define(['agenda-charts', '../lib/reqwest', '../lib/when'], function (Charts, Req
         function (responses) {
             var parties = responses[0],
                 agenda = responses[1],
-                parties_menu = document.getElementById('parties-menu'),
-                toggle_zoom = document.getElementById('toggle-zoom'),
-                toggle_view = document.getElementById('toggle-view'),
+                parties_menu = d3.select('#parties-menu'),
+                toggle_zoom = d3.select('#toggle-zoom'),
+                toggle_view = d3.select('#toggle-view'),
                 parties_data = agenda.parties.map(function (item, i) {
                     item.size = parties.objects[i].number_of_seats;
                     item.volume = 100;
@@ -109,17 +109,17 @@ define(['agenda-charts', '../lib/reqwest', '../lib/when'], function (Charts, Req
                 dispatcher.switch_controls(is_all);
             })
             .on('switch_controls', function (is_parties_view) {
-                toggle_zoom.setAttribute('class', is_parties_view ? 'hide' : '');
-                toggle_view.setAttribute('class', ! is_parties_view ? 'hide' : '');
+                toggle_zoom.attr('class', is_parties_view ? 'hide' : '');
+                toggle_view.attr('class', ! is_parties_view ? 'hide' : '');
             });
 
-            parties_menu.innerHTML = parties.objects.reduce(function (html, item) {
-                return html + '<option value="' + item.id + '">' + item.name + '</option>';
-            }, '<option value="0">כל המפלגות</option>');
-            parties_menu.addEventListener('change', function (e) {
-                //TODO: publish an event that transitions current display out and selected display in
-                dispatcher.change_party(e.target.value);
-            }, false);
+            parties_menu.html(parties.objects.reduce(function (html, item) {
+                    return html + '<option value="' + item.id + '">' + item.name + '</option>';
+                }, '<option value="0">כל המפלגות</option>'))
+                .on('change', function (d) {
+                    //TODO: publish an event that transitions current display out and selected display in
+                    dispatcher.change_party(d3.event.target.value);
+                }, false);
         }
     );
 });
