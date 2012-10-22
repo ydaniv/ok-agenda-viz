@@ -1,10 +1,10 @@
-define(['../lib/d3.v2'], function () {
+define(['../lib/d3.v2', 'agenda-tooltips'], function () {
 
     // some utilities
-    function prop (prop) {
+    function prop (p) {
         return function (obj) {
-            return obj[prop];
-        }
+            return obj[p];
+        };
     }
     function extend (target, source) {
         var k;
@@ -17,6 +17,7 @@ define(['../lib/d3.v2'], function () {
     var d3 = window.d3;
 
     function Chart (options) {
+        var that = this;
         this.setData(options.data);
         // set chart dimensions
         this.height = options.height || 200;
@@ -26,8 +27,16 @@ define(['../lib/d3.v2'], function () {
             y   : 30
         };
         this.ranges = options.ranges;
-        this.mouseover = options.mouseover;
-        this.mouseout = options.mouseout;
+        this.mouseover = function(d,i) {
+            console.log("mouseover", that);
+            that.showDetails(d, i, this);
+            options.mouseover(d, i, this);
+        };
+        this.mouseout = function(d, i) {
+            console.log("mouseout", that);
+            that.hideDetails(d, i, this);
+            options.mouseout(d, i, this);
+        };
         this.click = options.click;
         this.no_axes = options.no_axes;
         // create the chart's canvas
@@ -36,7 +45,7 @@ define(['../lib/d3.v2'], function () {
             .attr('width', this.width)
             .attr('height', this.height);
         // cache for tooltips
-        this.tooltips = {};
+        // this.tooltips = {};
     }
 
     Chart.prototype = {
@@ -126,25 +135,37 @@ define(['../lib/d3.v2'], function () {
             }
             return this;
         },
-        tooltip         : function (selection, chart, text_index) {
-            var name = selection.data()[0][text_index],
-                tip;
-            if ( ! (name in chart.tooltips) ) {
-                tip = selection.append('title')
-                    .text(name);
-                chart.tooltips[name] = tip;
-            }
-            else {
-                tip = chart.tooltips[name];
-            }
-//            tip.transition()
-//               .duration(300)
-//               .attr('opacity', 1);
+//         tooltip         : function (selection, chart, text_index) {
+//             var name = selection.data()[0][text_index],
+//                 tip;
+//             if ( ! (name in chart.tooltips) ) {
+//                 tip = selection.append('title')
+//                     .text(name);
+//                 chart.tooltips[name] = tip;
+//             }
+//             else {
+//                 tip = chart.tooltips[name];
+//             }
+// //            tip.transition()
+// //               .duration(300)
+// //               .attr('opacity', 1);
+//         },
+        showDetails: function(data, i, element) {
+            console.log("showDetails", data, i, element);
+            d3.select(element).attr("stroke", "black");
+            content = data[3];
+            return this.tooltip.showTooltip(content, d3.event);
+        },
+        hideDetails: function(data, i, element) {
+            console.log("hideDetails", data, i, element);
+            return this.tooltip.hideTooltip();
         }
     };
 
     function PartiesChart (options) {
         var chart = this;
+        this.tooltip = Tooltip("parties_tooltip", 200);
+
         Chart.call(this, options);
         this.element = 'circle';
     }
@@ -249,6 +270,8 @@ define(['../lib/d3.v2'], function () {
         this.element = 'rect';
         this.parties_toggle = {};
         this.zoom_in = false;
+        this.tooltip = Tooltip("members_tooltip", 200);
+
     }
 
     MembersChart.prototype = extend(Object.create(Chart.prototype), {
