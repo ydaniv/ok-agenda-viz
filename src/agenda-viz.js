@@ -3,24 +3,39 @@ define(['agenda-charts', '../lib/reqwest', '../lib/when'], function (Charts, Req
     var d3 = window.d3,
         Model = {
             get : function (url) {
-                var deferred = When.defer();
-                //TODO: consider using d3.xhr
-                Reqwest({
-                    url     : url,
-                    type    : 'jsonp',
-                    success : function (response) {
-                        console.log(response);
-                        this.data = response;
-                        deferred.resolve(response);
-                    },
-                    error   : function () {
-                        try {
-                            console.error('Failed to get ' + url, arguments);
-                        } catch (e) {alert('Failed to get ' + url);}
-                        deferred.reject(arguments[1]);
-                    }
-                });
+                var deferred = When.defer(),
+                    that = this,
+                    cache = this.cache(url);
+                if ( cache ) {
+                    deferred.resolve(cache);
+                }
+                else {
+                    //TODO: consider using d3.xhr
+                    Reqwest({
+                        url     : url,
+                        type    : 'jsonp',
+                        success : function (response) {
+                            console.log(response);
+                            that.cache(url, response);
+                            deferred.resolve(response);
+                        },
+                        error   : function () {
+                            try {
+                                console.error('Failed to get ' + url, arguments);
+                            } catch (e) {alert('Failed to get ' + url);}
+                            deferred.reject(arguments[1]);
+                        }
+                    });
+                }
                 return deferred.promise;
+            },
+            cache   : function (key, data) {
+                if ( arguments.length === 1 ) {
+                    return JSON.parse(localStorage.getItem(key));
+                }
+                else {
+                    localStorage.setItem(key, JSON.stringify(data));
+                }
             }
         },
         Parties = Object.create(Model),

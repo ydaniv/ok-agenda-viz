@@ -115,16 +115,14 @@ define(['../lib/d3.v2'], function () {
             return this;
         },
         draw            : function () {
-            var all, exit, enter;
             if ( ! this.selection ) {
                 this.render()
                     .selection.all.call(this.transition, this);
             }
             else {
-                all = this.svg.selectAll(this.element)
-                    .data(this.data);
-                all.exit().call(this.transition, this, true);
-                all.enter().call(this.transition, this);
+                this.svg.data(this.data).selectAll(this.element);
+//                all.exit().call(this.transition, this, true);
+//                all.enter().call(this.transition, this);
             }
             return this;
         },
@@ -250,6 +248,7 @@ define(['../lib/d3.v2'], function () {
         this.stroke = options.stroke || 1;
         this.element = 'rect';
         this.parties_toggle = {};
+        this.zoom_in = false;
     }
 
     MembersChart.prototype = extend(Object.create(Chart.prototype), {
@@ -398,7 +397,8 @@ define(['../lib/d3.v2'], function () {
         zoom        : function (is_in) {
             //TODO: add transition to scale change
             //TODO: separate selection for scaling from selection for drawing - to be able to scale one party to global context
-            var chart = this;
+            var chart = this,
+                changing_state = this.zoom_in ^ is_in;
             if ( is_in ) {
                 this.data = this.selection.current.data();
             }
@@ -411,6 +411,7 @@ define(['../lib/d3.v2'], function () {
             this.svg.data(this.data).selectAll(this.element).attr('x', function(d, i) {
                 return chart.x_scale(d[0]);
             });
+//            this.draw();
             return this;
         }
     });
