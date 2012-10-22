@@ -394,10 +394,17 @@ define(['../lib/d3.v2'], function () {
                 });
             return chart;
         },
-        zoom        : function (is_in) {
+        zoom        : function (is_in) {debugger;
             //TODO: add transition to scale change
             //TODO: separate selection for scaling from selection for drawing - to be able to scale one party to global context
             var chart = this;
+            // if `is_in` is not specified then toggle state
+            if ( ! arguments.length ) {
+                is_in = ! this.zoom_in;
+            }
+            // set state
+            this.zoom_in = is_in;
+            // set data according to scope
             if ( is_in ) {
                 this.data = this.selection.current.data();
             }
@@ -407,7 +414,9 @@ define(['../lib/d3.v2'], function () {
             // need to separate scales and only zoom on X and color (not Y)
             this.setScales().createAxes();
             // change data to new selection and redraw the selected party
-            this.svg.data(this.data).selectAll(this.element).attr('x', function(d, i) {
+            this.svg.data(this.data).selectAll(this.element)
+                .transition().delay(1000).duration(500)
+                .attr('x', function(d, i) {
                 return chart.x_scale(d[0]);
             });
 //            this.draw();

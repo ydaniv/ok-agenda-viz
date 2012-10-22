@@ -119,7 +119,14 @@ define(['agenda-charts', '../lib/reqwest', '../lib/when'], function (Charts, Req
                 .on('change', function (d) {
                     //TODO: publish an event that transitions current display out and selected display in
                     dispatcher.change_party(d3.event.target.value);
-                }, false);
+                });
+
+            toggle_zoom.on('click', function (d) {
+                members_chart.zoom();
+            });
+            toggle_view.on('click', function () {
+                
+            });
         }
     );
 });
