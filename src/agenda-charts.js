@@ -33,8 +33,8 @@ define(['../lib/d3.v2'], function () {
         // create the chart's canvas
         this.svg = options.svg || d3.select(options.container || 'body')
             .append('svg')
-            .attr("width", this.width)
-            .attr("height", this.height);
+            .attr('width', this.width)
+            .attr('height', this.height);
         // cache for tooltips
         this.tooltips = {};
     }
@@ -186,25 +186,19 @@ define(['../lib/d3.v2'], function () {
                 .append(this.element)
                 // position the circles
                 //TODO: make sure they don't cover each other
-                .attr("cx", function(d) {
+                .attr('cx', function(d) {
                     return chart.x_scale(d[0]);
                 })
-                .attr("cy", function(d) {
+                .attr('cy', function(d) {
                     return chart.y_scale(d[1]);
                 })// radii initially set to 0 and then transitioned
-                .attr("r", function(d) {
-                    return 0;
-                })
+                .attr('r', 0)
                 // paint
-                .attr("fill", function(d) {
+                .attr('fill', function(d) {
                     return chart.color_scale(d[0]);
                 })
-                .attr("fill-opacity", function(d) {
-                    return .7;
-                })
-                .attr("stroke", function(d) {
-                    return '#222222';
-                });
+                .attr('fill-opacity', .7)
+                .attr('stroke', '#222222');
             this.addEvents();
             return this;
         },
@@ -215,7 +209,7 @@ define(['../lib/d3.v2'], function () {
                 .delay(function(d, i) {
                     return transit_out ? 0 : i * 50;
                 })
-                .attr("r", function(d) {
+                .attr('r', function(d) {
                     return transit_out ? 0 : chart.r_scale(d[2]);
                 });
             return chart;
@@ -285,23 +279,16 @@ define(['../lib/d3.v2'], function () {
                 .enter()
                 // add the member's rectangle
                 .append(this.element)
-                .attr("x", function(d, i) {
-//                    return chart.padding.x + i * w;
+                .attr('x', function(d, i) {
                     return chart.x_scale(d[0]);
                 })
-                .attr("y", function(d) {
-                    return chart.height - chart.padding.y;
-                })
-                .attr("width", function(d) {
-                    return bar_width;
-                })
-                .attr("height", function(d) {
-                    return 0;
-                })
-                .attr("fill", function(d) {
+                .attr('y', chart.height - chart.padding.y)
+                .attr('width', bar_width)
+                .attr('height', 0)
+                .attr('fill', function(d) {
                     return chart.color_scale(d[0]);
                 })
-                .attr("stroke", function(d) {
+                .attr('stroke', function(d) {
                     return chart.color_scale(d[0]);
                 });
             this.addEvents();
@@ -313,10 +300,10 @@ define(['../lib/d3.v2'], function () {
                 .duration(750)
                 .delay(function(d, i) {
                     return i * 10;
-                }).attr("height", function(d) {
-                    return transit_out ? 0 : chart.height - chart.padding.y - chart.y_scale(d[1]);
-                }).attr("y", function(d) {
-                    return transit_out ? chart.height - chart.padding.y : chart.y_scale(d[1]);
+                }).attr('height', transit_out ? 0 : function(d) {
+                    return chart.height - chart.padding.y - chart.y_scale(d[1]);
+                }).attr('y', transit_out ? chart.height - chart.padding.y : function(d) {
+                    return chart.y_scale(d[1]);
                 });
             return chart;
         }
