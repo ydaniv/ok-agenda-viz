@@ -334,7 +334,7 @@ define(['../lib/d3.v2'], function () {
                 // turn on persistency if `override_persist` is `true`
                 override_persist && (this.parties_toggle[id] = true);
                 // if toggling to active then select
-                this.select(id, true)
+                this.select(id)
                     // transition in or out according to new state - `true` => 'out'
                     .call(this.transition, this);
             }
@@ -368,6 +368,23 @@ define(['../lib/d3.v2'], function () {
                     return chart.y_scale(d[1]);
                 });
             return chart;
+        },
+        zoom        : function (is_in) {
+            //TODO: add transition to scale change
+            var chart = this;
+            if ( is_in ) {
+                this.data = this.selection.current.data();
+            }
+            else {
+                this.data = this.selection.all.data();
+            }
+            // need to separate scales and only zoom on X and color (not Y)
+            this.setScales().createAxes();
+            // change data to new selection and redraw the selected party
+            this.svg.data(this.data).selectAll(this.element).attr('x', function(d, i) {
+                return chart.x_scale(d[0]);
+            });
+            return this;
         }
     });
 

@@ -72,6 +72,7 @@ define(['agenda-charts', '../lib/reqwest', '../lib/when'], function (Charts, Req
                 }).render();
             
             dispatcher.on('change_party', function (party_id) {
+                var is_all = !+party_id;
                 parties_chart.selection.all.each(function (d) {
                     var id = d[4];
                     if ( party_id != id && members_chart.parties_toggle[id] ) {
@@ -79,10 +80,14 @@ define(['agenda-charts', '../lib/reqwest', '../lib/when'], function (Charts, Req
                     }
                     if ( party_id == id ) {
                         members_chart.show(id, true);
+                        members_chart.zoom(true);
                     }
                 });
                 // toggle all parties
-                parties_chart.selection.all.call(parties_chart.transition, parties_chart, +party_id);
+                parties_chart.selection.all.call(parties_chart.transition, parties_chart, !is_all);
+                if ( is_all ) {
+                    members_chart.zoom(false);
+                }
             });
 
             parties_menu.innerHTML = parties.objects.reduce(function (html, item) {
