@@ -11,6 +11,9 @@
             top: 0;
             left: 0;
         }
+        .hide {
+            display: none;
+        }
         #controls {
             position: absolute;
             bottom: 0;
@@ -28,7 +31,8 @@
     <div id="members-chart" class="chart-container"></div>
     <div id="controls">
         <select id="parties-menu" name="party"></select>
-        <button id="toggle-zoom" name="zoom">Toggle Zoom</button>
+        <button id="toggle-zoom" name="zoom" class="hide">Toggle Zoom</button>
+        <button id="toggle-view" name="parties-members">Toggle View</button>
     </div>
     <script data-main="src/agenda-viz.js" src="lib/require.js"></script>
 </body>

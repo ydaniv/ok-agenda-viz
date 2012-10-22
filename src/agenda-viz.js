@@ -33,6 +33,8 @@ define(['agenda-charts', '../lib/reqwest', '../lib/when'], function (Charts, Req
             var parties = responses[0],
                 agenda = responses[1],
                 parties_menu = document.getElementById('parties-menu'),
+                toggle_zoom = document.getElementById('toggle-zoom'),
+                toggle_view = document.getElementById('toggle-view'),
                 parties_data = agenda.parties.map(function (item, i) {
                     item.size = parties.objects[i].number_of_seats;
                     item.volume = 100;
@@ -46,7 +48,7 @@ define(['agenda-charts', '../lib/reqwest', '../lib/when'], function (Charts, Req
                         }
                     });
                 }), agenda.members),
-                dispatcher = d3.dispatch('change_party'),
+                dispatcher = d3.dispatch('change_party', 'switch_controls'),
                 parties_chart = new Charts.PartiesChart({
                     data        : parties_data,
                     container   : '#parties-chart',
@@ -88,6 +90,12 @@ define(['agenda-charts', '../lib/reqwest', '../lib/when'], function (Charts, Req
                 if ( is_all ) {
                     members_chart.zoom(false);
                 }
+                // turn on/off zoom toggle and view toggle
+                dispatcher.switch_controls(is_all);
+            })
+            .on('switch_controls', function (is_parties_view) {
+                toggle_zoom.setAttribute('class', is_parties_view ? 'hide' : '');
+                toggle_view.setAttribute('class', ! is_parties_view ? 'hide' : '');
             });
 
             parties_menu.innerHTML = parties.objects.reduce(function (html, item) {
