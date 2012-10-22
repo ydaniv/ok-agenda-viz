@@ -18,7 +18,9 @@ function Tooltip(tooltipId, width){
 
 	function hideTooltip(){
 		console.log("hideTooltip");
-		d3.select("#"+tooltipId).style("display", "none");
+		setTimeout(function () {
+			d3.select("#"+tooltipId).style("display", "none");
+		}, 2000);
 	}
 
 	function updatePosition(event){
