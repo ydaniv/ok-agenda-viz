@@ -208,11 +208,11 @@ define(['../lib/d3.v2'], function () {
             // transition the radii of all circles
             selection.transition()
                 .duration(750)
-                .delay(function(d, i) {
-                    return transit_out ? 0 : i * 50;
+                .delay(transit_out ? 0 : function(d, i) {
+                    return i * 50;
                 })
-                .attr('r', function(d) {
-                    return transit_out ? 0 : chart.r_scale(d[2]);
+                .attr('r', transit_out ? 0 : function(d) {
+                    return chart.r_scale(d[2]);
                 });
             return chart;
         }
