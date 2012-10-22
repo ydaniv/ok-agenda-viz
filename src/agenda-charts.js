@@ -371,6 +371,7 @@ define(['../lib/d3.v2'], function () {
         },
         zoom        : function (is_in) {
             //TODO: add transition to scale change
+            //TODO: separate selection for scaling from selection for drawing - to be able to scale one party to global context
             var chart = this;
             if ( is_in ) {
                 this.data = this.selection.current.data();
