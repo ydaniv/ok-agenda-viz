@@ -1,5 +1,4 @@
 function Tooltip(tooltipId, width){
-	console.log("custom tooltip");
 	d3.select("body").append("div").attr("class", "tooltip").attr("id", tooltipId);
 
 	if(width){
@@ -9,7 +8,6 @@ function Tooltip(tooltipId, width){
 	hideTooltip();
 
 	function showTooltip(content, event){
-		console.log("showTooltip", content, event);
 		d3.select("#"+tooltipId).html(content);
 		d3.select("#"+tooltipId).style("display", "block");
 
@@ -17,14 +15,12 @@ function Tooltip(tooltipId, width){
 	}
 
 	function hideTooltip(){
-		console.log("hideTooltip");
 		setTimeout(function () {
 			d3.select("#"+tooltipId).style("display", "none");
 		}, 2000);
 	}
 
 	function updatePosition(event){
-		console.log("updatePosition", event);
 		var ttid = "#"+tooltipId;
 		var xOffset = 20;
 		var yOffset = 10;
@@ -43,7 +39,6 @@ function Tooltip(tooltipId, width){
 		if (tttop < wscrY + yOffset){
 			tttop = curY + yOffset;
 		}
-		console.log("pos", ttid, tttop, ttleft);
 		d3.select(ttid).style("top", tttop + "px");
 		d3.select(ttid).style("left", ttleft + "px");
 	}
