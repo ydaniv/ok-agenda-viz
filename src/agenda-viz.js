@@ -82,7 +82,7 @@ define(['agenda-charts', '../lib/reqwest', '../lib/when'], function (Charts, Req
                             dispatcher.change_party(party_id);
                         }
                         else {
-                            members_chart.toggle(party_id, true);
+                            members_chart.single(party_id, true);
                         }
                     },
                     no_axes     : true

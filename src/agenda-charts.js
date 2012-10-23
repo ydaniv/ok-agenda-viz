@@ -385,6 +385,23 @@ define(['../lib/d3.v2', 'agenda-tooltips'], function () {
             }
             return this;
         },
+        single      : function (party, dont_set) {
+            var id, pid;
+            // if party is NOT party_id but a selection
+            id = typeof party === 'number' ? party : party.data()[0][5];
+            // if toggling this party to 'on'
+            if ( ! this.parties_toggle[id] ) {
+                // toggle off all other parties
+                for ( pid in this.parties_toggle ) {
+                    if ( id != pid ) {
+                        this.hide(+pid, true);
+                    }
+                }
+            }
+            // toggle this party
+            this.toggle(id, dont_set);
+            return this;
+        },
         show        : function (party, override_persist) {
             var id;
             // if party is NOT party_id but a selection
