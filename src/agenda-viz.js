@@ -43,7 +43,7 @@ define(['agenda-charts', '../lib/reqwest', '../lib/when'], function (Charts, Req
 
     When.all(
         [Parties.get('http://oknesset.org/api/v2/party/?callback=?'),
-        Agenda.get('http://oknesset.org/api/v2/agenda/' + 53 + '/?callback=?')],
+        Agenda.get('http://oknesset.org/api/v2/agenda/' + 26 + '/?callback=?')],
         function (responses) {
             var parties = responses[0],
                 agenda = responses[1],
@@ -85,7 +85,8 @@ define(['agenda-charts', '../lib/reqwest', '../lib/when'], function (Charts, Req
                     container   : '#members-chart',
                     height      : 300,
                     width       : 800
-                }).render();
+                }).render(),
+                parties_view = true;
             
             dispatcher.on('change_party', function (party_id) {
                 var is_all = !+party_id;
@@ -99,6 +100,8 @@ define(['agenda-charts', '../lib/reqwest', '../lib/when'], function (Charts, Req
                         members_chart.zoom(true);
                     }
                 });
+                // toggle view state
+                parties_view = is_all;
                 // toggle all parties
                 parties_chart.selection.all.call(parties_chart.transition, parties_chart, !is_all);
                 if ( is_all ) {
@@ -115,7 +118,7 @@ define(['agenda-charts', '../lib/reqwest', '../lib/when'], function (Charts, Req
                 });
 
             toggle_zoom.on('click', function (d) {
-                members_chart.zoom();
+                (parties_view ? parties_chart : members_chart).zoom();
             });
         }
     );

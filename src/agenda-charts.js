@@ -13,6 +13,9 @@ define(['../lib/d3.v2', 'agenda-tooltips'], function () {
         }
         return target;
     }
+    function defined (arg, def) {
+        return arg == null ? def : arg;
+    }
 
     var d3 = window.d3;
 
@@ -50,13 +53,15 @@ define(['../lib/d3.v2', 'agenda-tooltips'], function () {
 
     Chart.prototype = {
         constructor     : Chart,
-        setXDomain      : function () {
+        setXDomain      : function (min, max, med) {
             // create a score accessor
-            var getScore = prop(0);
+//            var getScore = prop(0);
             // set X scale min, max and median
-            this.x_in_min = d3.min(this.data, getScore);
-            this.x_in_max = d3.max(this.data, getScore);
-            this.x_in_med = 0;
+//            this.x_in_min = d3.min(this.data, getScore);
+//            this.x_in_max = d3.max(this.data, getScore);
+            this.x_in_min = defined(min, -100);
+            this.x_in_max = defined(max, 100);
+            this.x_in_med = defined(med, 0);
 //            this.x_in_med = (this.x_in_min + this.x_in_max)/2;
 //            this.x_med = d3.median(this.data, getScore);
 //            this.x_med = d3.mean(this.data, getScore);
@@ -135,29 +140,12 @@ define(['../lib/d3.v2', 'agenda-tooltips'], function () {
             }
             return this;
         },
-//         tooltip         : function (selection, chart, text_index) {
-//             var name = selection.data()[0][text_index],
-//                 tip;
-//             if ( ! (name in chart.tooltips) ) {
-//                 tip = selection.append('title')
-//                     .text(name);
-//                 chart.tooltips[name] = tip;
-//             }
-//             else {
-//                 tip = chart.tooltips[name];
-//             }
-// //            tip.transition()
-// //               .duration(300)
-// //               .attr('opacity', 1);
-//         },
         showDetails: function(data, i, element) {
-            console.log("showDetails", data, i, element);
             d3.select(element).attr("stroke", "black");
-            content = data[3];
+            var content = data[3];
             return this.tooltip.showTooltip(content, d3.event);
         },
         hideDetails: function(data, i, element) {
-            console.log("hideDetails", data, i, element);
             return this.tooltip.hideTooltip();
         }
     };
@@ -195,25 +183,33 @@ define(['../lib/d3.v2', 'agenda-tooltips'], function () {
                 // use it to override the defaults
                 return this.setRanges.apply(this, this.ranges);
             }
-            this.x_out_min = x_min == null ? this.padding.x + this.r_in_max * 2 : x_min;
-            this.x_out_max = x_max == null ? this.width - this.padding.x - this.r_in_max * 2 : x_max;
-            this.y_out_min = y_min == null ? this.height - this.padding.y - this.r_in_max * 2 : y_min;
+            this.x_out_min = defined(x_min, this.padding.x + this.r_in_max * 2);
+            this.x_out_max = defined(x_max, this.width - this.padding.x - this.r_in_max * 2);
+            this.y_out_min = defined(y_min, this.height - this.padding.y - this.r_in_max * 2);
             //TODO: just placing them in the middle for now until we have proper volume - then change range's max
-            this.y_out_max = y_max == null ? this.height / 2 : y_max;
-            this.r_out_min = r_min == null ? this.r_in_min * 2 : r_min;
-            this.r_out_max = r_max == null ? this.r_in_max * 2 : r_max;
+            this.y_out_max = defined(y_max, this.height / 2);
+            this.r_out_min = defined(r_min, this.r_in_min * 2);
+            this.r_out_max = defined(r_max, this.r_in_max * 2);
             return this;
         },
-        setScales   : function () {
+        setRDomain  : function () {
             var getSize = prop(2);
             // set R scale min and max
             this.r_in_max = d3.max(this.data, getSize);
             this.r_in_min = d3.min(this.data, getSize);
-            Chart.prototype.setScales.call(this);
+            return this;
+        },
+        setRScale   : function () {
             // set R scale
             this.r_scale = d3.scale.linear()
                 .domain([this.r_in_min, this.r_in_max])
                 .range([this.r_out_min, this.r_out_max]);
+            return this;
+        },
+        setScales   : function () {
+            this.setRDomain();
+            Chart.prototype.setScales.call(this);
+            this.setRScale();
             return this;
         },
         render      : function (complete) {
@@ -260,6 +256,39 @@ define(['../lib/d3.v2', 'agenda-tooltips'], function () {
                     return chart.r_scale(d[2]);
                 });
             return chart;
+        },
+        zoom        : function (is_in) {
+            //TODO: add transition to scale change
+            var chart = this,
+                getScore = prop(0);
+            // if `is_in` is not specified then toggle state
+            if ( ! arguments.length ) {
+                is_in = ! this.zoom_in;
+            }
+            // set state
+            this.zoom_in = is_in;
+            // need to separate scales and only zoom on X and color (not Y and R)
+            //TODO: refactor this mess
+            is_in ?
+                this.setXDomain(d3.min(this.data, getScore), d3.max(this.data, getScore)) :
+                this.setXDomain(-100, 100);
+//            this.setYDomain()
+//                .setRDomain()
+            this.setRanges()
+                .setXScale()
+                .setYScale()
+                .setRScale()
+                .setColorScale()
+                .createAxes();
+            // change data to new selection and redraw the selected party
+            this.svg.data(this.data).selectAll(this.element)
+                //TODO: tween with other events
+                .transition().delay(1000).duration(500)
+                .attr('x', function(d, i) {
+                    return chart.x_scale(d[0]);
+                });
+//            this.draw();
+            return this;
         }
     });
 
@@ -299,10 +328,10 @@ define(['../lib/d3.v2', 'agenda-tooltips'], function () {
                 // use it to override the defaults
                 return this.setRanges.apply(this, this.ranges);
             }
-            this.x_out_min = x_min == null ? this.padding.x : x_min; 
-            this.x_out_max = x_max == null ? this.width - this.padding.x : x_max; 
-            this.y_out_min = y_min == null ? this.height - this.padding.y : y_min; 
-            this.y_out_max = y_max == null ? this.padding.y : y_max; 
+            this.x_out_min = defined(x_min, this.padding.x); 
+            this.x_out_max = defined(x_max, this.width - this.padding.x); 
+            this.y_out_min = defined(y_min, this.height - this.padding.y); 
+            this.y_out_max = defined(y_max, this.padding.y); 
             return this;
         },
         render      : function (complete) {
@@ -416,10 +445,10 @@ define(['../lib/d3.v2', 'agenda-tooltips'], function () {
                 });
             return chart;
         },
-        zoom        : function (is_in) {debugger;
+        zoom        : function (is_in) {
             //TODO: add transition to scale change
-            //TODO: separate selection for scaling from selection for drawing - to be able to scale one party to global context
-            var chart = this;
+            var chart = this,
+                getScore = prop(0);
             // if `is_in` is not specified then toggle state
             if ( ! arguments.length ) {
                 is_in = ! this.zoom_in;
@@ -434,9 +463,19 @@ define(['../lib/d3.v2', 'agenda-tooltips'], function () {
                 this.data = this.selection.all.data();
             }
             // need to separate scales and only zoom on X and color (not Y)
-            this.setScales().createAxes();
+            //TODO: refactor this mess
+            is_in ?
+                this.setXDomain(d3.min(this.data, getScore), d3.max(this.data, getScore)) :
+                this.setXDomain(-100, 100);
+//            this.setYDomain()
+            this.setRanges()
+                .setXScale()
+//                .setYScale()
+//                .setColorScale()
+                .createAxes();
             // change data to new selection and redraw the selected party
             this.svg.data(this.data).selectAll(this.element)
+                //TODO: tween with other events
                 .transition().delay(1000).duration(500)
                 .attr('x', function(d, i) {
                 return chart.x_scale(d[0]);
