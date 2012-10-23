@@ -76,15 +76,15 @@ define(['agenda-charts', '../lib/reqwest', '../lib/when'], function (Charts, Req
                     },
                     click       : function (party) {
                         members_chart.toggle(party[4], true);
-                    }
+                    },
+                    no_axes     : true
                 }).draw(),
 
                 members_chart = new Charts.MembersChart({
                     data        : members_data,
                     container   : '#members-chart',
                     height      : 300,
-                    width       : 800,
-                    no_axes     : true
+                    width       : 800
                 }).render(),
                 parties_view = true;
 
