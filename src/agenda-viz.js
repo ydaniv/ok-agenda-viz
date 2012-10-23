@@ -62,7 +62,7 @@ define(['agenda-charts', '../lib/reqwest', '../lib/when'], function (Charts, Req
                         }
                     });
                 }), agenda.members),
-                dispatcher = d3.dispatch('change_party', 'switch_controls'),
+                dispatcher = d3.dispatch('change_party'),
                 parties_chart = new Charts.PartiesChart({
                     data        : parties_data,
                     container   : '#parties-chart',
@@ -76,18 +76,25 @@ define(['agenda-charts', '../lib/reqwest', '../lib/when'], function (Charts, Req
                     },
                     click       : function (party) {
                         members_chart.toggle(party[4], true);
-                    },
-                    no_axes     : true
+                    }
                 }).draw(),
 
                 members_chart = new Charts.MembersChart({
                     data        : members_data,
                     container   : '#members-chart',
                     height      : 300,
-                    width       : 800
+                    width       : 800,
+                    no_axes     : true
                 }).render(),
                 parties_view = true;
-            
+
+            // after parties chart was initialised with default X scale domain,
+            // set it's X domain to the min/max of members' scores
+            parties_chart.domains =[
+                d3.min(members_data, function (d) {return d.score;}),
+                d3.max(members_data, function (d) {return d.score;})
+            ];
+
             dispatcher.on('change_party', function (party_id) {
                 var is_all = !+party_id;
                 parties_chart.selection.all.each(function (d) {
@@ -105,7 +112,7 @@ define(['agenda-charts', '../lib/reqwest', '../lib/when'], function (Charts, Req
                 // toggle all parties
                 parties_chart.selection.all.call(parties_chart.transition, parties_chart, !is_all);
                 if ( is_all ) {
-                    members_chart.zoom(false);
+                    members_chart.zoom(parties_chart.zoom_in ? 'all' : false);
                 }
             });
 
@@ -118,7 +125,13 @@ define(['agenda-charts', '../lib/reqwest', '../lib/when'], function (Charts, Req
                 });
 
             toggle_zoom.on('click', function (d) {
-                (parties_view ? parties_chart : members_chart).zoom();
+                if ( parties_view ) {
+                    parties_chart.zoom();
+                    members_chart.zoom(parties_chart.zoom_in ? 'all' : false);
+                }
+                else {
+                    members_chart.zoom();
+                }
             });
         }
     );

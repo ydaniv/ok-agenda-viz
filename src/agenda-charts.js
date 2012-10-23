@@ -29,14 +29,13 @@ define(['../lib/d3.v2', 'agenda-tooltips'], function () {
             x   : 30,
             y   : 30
         };
+        this.domains = options.domains;
         this.ranges = options.ranges;
         this.mouseover = function(d,i) {
-            console.log("mouseover", that);
             that.showDetails(d, i, this);
             options.mouseover(d, i, this);
         };
         this.mouseout = function(d, i) {
-            console.log("mouseout", that);
             that.hideDetails(d, i, this);
             options.mouseout(d, i, this);
         };
@@ -54,17 +53,15 @@ define(['../lib/d3.v2', 'agenda-tooltips'], function () {
     Chart.prototype = {
         constructor     : Chart,
         setXDomain      : function (min, max, med) {
-            // create a score accessor
-//            var getScore = prop(0);
-            // set X scale min, max and median
-//            this.x_in_min = d3.min(this.data, getScore);
-//            this.x_in_max = d3.max(this.data, getScore);
-            this.x_in_min = defined(min, -100);
-            this.x_in_max = defined(max, 100);
-            this.x_in_med = defined(med, 0);
-//            this.x_in_med = (this.x_in_min + this.x_in_max)/2;
-//            this.x_med = d3.median(this.data, getScore);
-//            this.x_med = d3.mean(this.data, getScore);
+            var x_min, x_max, x_med;
+            if ( this.domains ) {
+                x_min = defined(this.domains[0], null);
+                x_max = defined(this.domains[1], null);
+                x_med = defined(this.domains[2], null);
+            }
+            this.x_in_min = defined(min, defined(x_min, -100));
+            this.x_in_max = defined(max, defined(x_max, 100));
+            this.x_in_med = defined(med, defined(x_med, 0));
             return this;
         },
         setYDomain      : function () {
@@ -267,18 +264,11 @@ define(['../lib/d3.v2', 'agenda-tooltips'], function () {
             }
             // set state
             this.zoom_in = is_in;
-            // need to separate scales and only zoom on X and color (not Y and R)
-            //TODO: refactor this mess
             is_in ?
-                this.setXDomain(d3.min(this.data, getScore), d3.max(this.data, getScore)) :
+                this.setXDomain() :
                 this.setXDomain(-100, 100);
-//            this.setYDomain()
-//                .setRDomain()
             this.setRanges()
                 .setXScale()
-//                .setYScale()
-//                .setRScale()
-//                .setColorScale()
                 .createAxes();
             // change data to new selection and redraw the selected party
             this.svg.data(this.data).selectAll(this.element)
@@ -447,30 +437,30 @@ define(['../lib/d3.v2', 'agenda-tooltips'], function () {
         zoom        : function (is_in) {
             //TODO: add transition to scale change
             var chart = this,
-                getScore = prop(0);
+                getScore = prop(0),
+                scope;
             // if `is_in` is not specified then toggle state
             if ( ! arguments.length ) {
                 is_in = ! this.zoom_in;
             }
+            else if ( typeof is_in == 'string' ) {
+                scope = is_in;
+                is_in = true;
+            }
             // set state
             this.zoom_in = is_in;
             // set data according to scope
-            if ( is_in ) {
+            if ( is_in && scope !== 'all' ) {
                 this.data = this.selection.current.data();
             }
             else {
                 this.data = this.selection.all.data();
             }
-            // need to separate scales and only zoom on X and color (not Y)
-            //TODO: refactor this mess
             is_in ?
                 this.setXDomain(d3.min(this.data, getScore), d3.max(this.data, getScore)) :
                 this.setXDomain(-100, 100);
-//            this.setYDomain()
             this.setRanges()
                 .setXScale()
-//                .setYScale()
-//                .setColorScale()
                 .createAxes();
             // change data to new selection and redraw the selected party
             this.svg.data(this.data).selectAll(this.element)
