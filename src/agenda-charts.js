@@ -241,7 +241,7 @@ define(['../lib/d3.v2', 'agenda-tooltips'], function () {
         transition  : function (selection, chart, transit_out) {
             // transition the radii of all circles
             selection.transition()
-                .duration(750)
+                .duration(200)
                 .delay(transit_out ? 0 : function(d, i) {
                     return i * 50;
                 })
@@ -437,7 +437,7 @@ define(['../lib/d3.v2', 'agenda-tooltips'], function () {
         transition  : function (selection, chart, transit_out) {
             // transition the radii of all circles
             selection.transition()
-                .duration(750)
+                .duration(200)
                 .delay(function(d, i) {
                     return i * 10;
                 }).attr('height', transit_out ? 0 : function(d) {
@@ -478,7 +478,7 @@ define(['../lib/d3.v2', 'agenda-tooltips'], function () {
             // change data to new selection and redraw the selected party
             this.svg.data(this.data).selectAll(this.element)
                 //TODO: tween with other events
-                .transition().delay(1000).duration(500)
+                .transition().delay(500).duration(400)
                 .attr('x', function(d, i) {
                 return chart.x_scale(d[0]);
             });
