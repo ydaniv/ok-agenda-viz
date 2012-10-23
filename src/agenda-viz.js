@@ -43,13 +43,12 @@ define(['agenda-charts', '../lib/reqwest', '../lib/when'], function (Charts, Req
 
     When.all(
         [Parties.get('http://oknesset.org/api/v2/party/?callback=?'),
-        Agenda.get('http://oknesset.org/api/v2/agenda/' + 1 + '/?callback=?')],
+        Agenda.get('http://oknesset.org/api/v2/agenda/' + 53 + '/?callback=?')],
         function (responses) {
             var parties = responses[0],
                 agenda = responses[1],
                 parties_menu = d3.select('#parties-menu'),
                 toggle_zoom = d3.select('#toggle-zoom'),
-                toggle_view = d3.select('#toggle-view'),
                 parties_data = agenda.parties.map(function (item, i) {
                     item.size = parties.objects[i].number_of_seats;
                     item.volume = 100;
@@ -105,12 +104,6 @@ define(['agenda-charts', '../lib/reqwest', '../lib/when'], function (Charts, Req
                 if ( is_all ) {
                     members_chart.zoom(false);
                 }
-                // turn on/off zoom toggle and view toggle
-                dispatcher.switch_controls(is_all);
-            })
-            .on('switch_controls', function (is_parties_view) {
-                toggle_zoom.attr('class', is_parties_view ? 'hide' : '');
-                toggle_view.attr('class', ! is_parties_view ? 'hide' : '');
             });
 
             parties_menu.html(parties.objects.reduce(function (html, item) {
@@ -123,9 +116,6 @@ define(['agenda-charts', '../lib/reqwest', '../lib/when'], function (Charts, Req
 
             toggle_zoom.on('click', function (d) {
                 members_chart.zoom();
-            });
-            toggle_view.on('click', function () {
-                
             });
         }
     );
