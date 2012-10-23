@@ -269,15 +269,18 @@ define(['../lib/d3.v2', 'agenda-tooltips'], function () {
             // change data to new selection and redraw the selected party
             this.svg.data(this.data).selectAll(this.element)
                 //TODO: tween with other events
-                .transition().delay(500).duration(500)
-                .attr('cx', function(d, i) {
-                    return chart.x_scale(d[0]);
-                });
+                .transition()
+                    .delay(500)
+                    .duration(500)
+                    .attr('cx', function(d, i) {
+                        return chart.x_scale(d[0]);
+                    });
             return this;
         }
     });
 
     function MembersChart (options) {
+        var _self = this;
         Chart.call(this, options);
         this.bar_padding = options.bar_padding || 1;
         this.stroke = options.stroke || 1;
@@ -285,7 +288,15 @@ define(['../lib/d3.v2', 'agenda-tooltips'], function () {
         this.parties_toggle = {};
         this.zoom_in = false;
         this.tooltip = Tooltip("members_tooltip", 200);
-
+        this.dispatcher = d3.dispatch('start', 'end');
+        this.dispatcher.on('start', function (type) {
+            if ( type === 'zoom' )
+                _self.in_transition = true;
+        })
+        .on('end', function (type) {
+            if ( type === 'zoom' )
+                _self.in_transition = false;
+        });
     }
 
     MembersChart.prototype = extend(Object.create(Chart.prototype), {
@@ -435,15 +446,30 @@ define(['../lib/d3.v2', 'agenda-tooltips'], function () {
             return this;
         },
         transition  : function (selection, chart, transit_out) {
+            var count = selection[0].length, counter = 1;
             // transition the radii of all circles
             selection.transition()
                 .duration(200)
                 .delay(function(d, i) {
                     return i * 10;
-                }).attr('height', transit_out ? 0 : function(d) {
+                })
+                .attr('height', transit_out ? 0 : function(d) {
                     return chart.height - chart.padding.y - chart.y_scale(d[1]);
-                }).attr('y', transit_out ? chart.height - chart.padding.y : function(d) {
+                })
+                .attr('y', transit_out ? chart.height - chart.padding.y : function(d) {
                     return chart.y_scale(d[1]);
+                })
+                .each('start', function () {
+                    if ( counter == 1 ) {
+                        chart.dispatcher.start('toggle');
+                    }
+                })
+                .each('end', function () {
+                    if ( counter === count) {
+                        chart.dispatcher.end('toggle');
+                    } else {
+                        counter += 1;
+                    }
                 });
             return chart;
         },
@@ -451,7 +477,8 @@ define(['../lib/d3.v2', 'agenda-tooltips'], function () {
             //TODO: add transition to scale change
             var chart = this,
                 getScore = prop(0),
-                scope;
+                counter = 1,
+                selection, scope, count;
             // if `is_in` is not specified then toggle state
             if ( ! arguments.length ) {
                 is_in = ! this.zoom_in;
@@ -476,12 +503,27 @@ define(['../lib/d3.v2', 'agenda-tooltips'], function () {
                 .setXScale()
                 .createAxes();
             // change data to new selection and redraw the selected party
-            this.svg.data(this.data).selectAll(this.element)
-                //TODO: tween with other events
-                .transition().delay(500).duration(400)
-                .attr('x', function(d, i) {
-                return chart.x_scale(d[0]);
-            });
+            selection = this.svg.data(this.data).selectAll(this.element);
+            count = selection[0].length;
+            // transition the members to their new X position depending on new zoom
+            selection.transition()
+                    .delay(500)
+                    .duration(400)
+                    .attr('x', function(d, i) {
+                        return chart.x_scale(d[0]);
+                    })
+                    .each('start', function () {
+                        if ( counter == 1 ) {
+                            chart.dispatcher.start('zoom');
+                        }
+                    })
+                    .each('end', function () {
+                        if ( counter === count) {
+                            chart.dispatcher.end('zoom');
+                        } else {
+                            counter += 1;
+                        }
+                    });
             return this;
         }
     });
