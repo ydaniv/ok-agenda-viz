@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Page for Open Knesset Agenda Visualization Widget</title>
+    <style>
+        body, html {
+            height: 100%;
+        }
+        .chart-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+        .hide {
+            display: none;
+        }
+        #controls {
+            position: absolute;
+            bottom: 0;
+        }
+        #members-chart {
+            z-index: 1;
+        }
+        #parties-chart {
+            z-index: 10;
+        }
+        .tooltip {
+            display: none;
+            position: absolute;
+            padding: 5px;
+            background-color: rgba(245,245,245,.5);
+            border: 2px solid #333;
+            border-radius: 5px;
+            font-family: sans-serif;
+            z-index: 2000;
+        }
+    </style>
+</head>
+<body>
+<div id="parties-chart" class="chart-container"></div>
+<div id="members-chart" class="chart-container"></div>
+<div id="controls">
+    <select id="parties-menu" name="party"></select>
+    <button id="toggle-zoom" name="zoom">Toggle Zoom</button>
+</div>
+<script data-main="js/agenda-viz.js" src="js/lib/require.js"></script>
+</body>
+</html>
