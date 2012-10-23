@@ -40,14 +40,13 @@ define(['../lib/d3.v2', 'agenda-tooltips'], function () {
             options.mouseout(d, i, this);
         };
         this.click = options.click;
+        this.touchstart = options.touchstart;
         this.no_axes = options.no_axes;
         // create the chart's canvas
         this.svg = options.svg || d3.select(options.container || 'body')
             .append('svg')
             .attr('width', this.width)
             .attr('height', this.height);
-        // cache for tooltips
-        // this.tooltips = {};
     }
 
     Chart.prototype = {
@@ -110,19 +109,16 @@ define(['../lib/d3.v2', 'agenda-tooltips'], function () {
                 // create X axis
                 this.x_axis = d3.svg.axis();
                 this.x_axis.scale(this.x_scale);
-                // create Y axis
-    //            this.y_axis = d3.svg.axis();
-    //            this.y_axis.scale(this.y_scale).orient('right');
                 // draw axes
                 this.svg.call(this.x_axis);
-    //            this.svg.call(this.y_axis);
             }
             return this;
         },
         addEvents       : function () {
             this.svg.selectAll(this.element).on('mouseover', this.mouseover, false)
                                             .on('mouseout', this.mouseout, false)
-                                            .on('click', this.click, false);
+                                            .on('click', this.click, false)
+                                            .on('touchstart', this.touchstart, false);
             return this;
         },
         draw            : function () {

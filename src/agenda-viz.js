@@ -74,7 +74,7 @@ define(['agenda-charts', '../lib/reqwest', '../lib/when'], function (Charts, Req
                     mouseout    : function (party) {
                         members_chart.hide(party[4]);
                     },
-                    click       : function (party) {
+                    touchstart  : function (party) {
                         members_chart.toggle(party[4], true);
                     },
                     no_axes     : true
