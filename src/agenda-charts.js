@@ -183,8 +183,8 @@ define(['../lib/d3.v2', 'agenda-tooltips'], function () {
                 // use it to override the defaults
                 return this.setRanges.apply(this, this.ranges);
             }
-            this.x_out_min = defined(x_min, this.padding.x + this.r_in_max * 2);
-            this.x_out_max = defined(x_max, this.width - this.padding.x - this.r_in_max * 2);
+            this.x_out_min = defined(x_min, this.padding.x);
+            this.x_out_max = defined(x_max, this.width - this.padding.x);
             this.y_out_min = defined(y_min, this.height - this.padding.y - this.r_in_max * 2);
             //TODO: just placing them in the middle for now until we have proper volume - then change range's max
             this.y_out_max = defined(y_max, this.height / 2);
@@ -276,18 +276,17 @@ define(['../lib/d3.v2', 'agenda-tooltips'], function () {
 //                .setRDomain()
             this.setRanges()
                 .setXScale()
-                .setYScale()
-                .setRScale()
-                .setColorScale()
+//                .setYScale()
+//                .setRScale()
+//                .setColorScale()
                 .createAxes();
             // change data to new selection and redraw the selected party
             this.svg.data(this.data).selectAll(this.element)
                 //TODO: tween with other events
-                .transition().delay(1000).duration(500)
-                .attr('x', function(d, i) {
+                .transition().delay(500).duration(500)
+                .attr('cx', function(d, i) {
                     return chart.x_scale(d[0]);
                 });
-//            this.draw();
             return this;
         }
     });
@@ -480,7 +479,6 @@ define(['../lib/d3.v2', 'agenda-tooltips'], function () {
                 .attr('x', function(d, i) {
                 return chart.x_scale(d[0]);
             });
-//            this.draw();
             return this;
         }
     });
