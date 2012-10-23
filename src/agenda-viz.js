@@ -75,7 +75,15 @@ define(['agenda-charts', '../lib/reqwest', '../lib/when'], function (Charts, Req
                         members_chart.hide(party[4]);
                     },
                     touchstart  : function (party) {
-                        members_chart.toggle(party[4], true);
+                        var party_id = party[4];
+                        if ( members_chart.parties_toggle[party_id] ) {
+                            // doesn't seem to trigger 'change' event, at least not on chrome
+                            parties_menu.property('value', party_id);
+                            dispatcher.change_party(party_id);
+                        }
+                        else {
+                            members_chart.toggle(party_id, true);
+                        }
                     },
                     no_axes     : true
                 }).draw(),
