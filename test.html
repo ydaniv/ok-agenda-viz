@@ -1,28 +1,28 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <meta charset="utf-8"/>
     <title>Test Page for Open Knesset Agenda Visualization Widget</title>
     <style>
         body, html {
             height: 100%;
+            direction: rtl;
+            margin: 0;
+            padding: 0;
+        }
+        div, h1, h2 {
+            margin: 0;
+            padding: 0;
         }
         .chart-container {
             position: absolute;
             top: 0;
-            left: 0;
+            right: 0;
+            width: 100%;
+            height: 100%;
         }
         .hide {
             display: none;
-        }
-        #controls {
-            position: absolute;
-            bottom: 0;
-        }
-        #members-chart {
-            z-index: 1;
-        }
-        #parties-chart {
-            z-index: 10;
         }
         .tooltip {
             display: none;
@@ -34,14 +34,47 @@
             font-family: sans-serif;
             z-index: 2000;
         }
+        #agenda-name {
+            display: inline;
+        }
+        #charts {
+            position: relative;
+            width: 500px;
+            height: 200px;
+            clear: both;
+        }
+        #controls {
+            /*position: absolute;*/
+            /*top: 0;*/
+            clear: both;
+        }
+        #header {
+            float: right;
+        }
+        #members-chart {
+            z-index: 1;
+        }
+        #owner-image {
+            float: right;
+        }
+        #parties-chart {
+            z-index: 10;
+        }
     </style>
 </head>
 <body>
-    <div id="parties-chart" class="chart-container"></div>
-    <div id="members-chart" class="chart-container"></div>
+    <div id="owner-image"><a href="" target="_blank"></a></div>
+    <div id="header">
+        <h1 id="agenda-name"><a href="" target="_blank"></a></h1><span><strong id="number-of-votes"></strong> הצבעות</span>
+        <h2 id="public-owner-name">בעריכת <a href="" target="_blank"></a></h2>
+    </div>
     <div id="controls">
         <select id="parties-menu" name="party"></select>
         <button id="toggle-zoom" name="zoom">Toggle Zoom</button>
+    </div>
+    <div id="charts">
+        <div id="parties-chart" class="chart-container"></div>
+        <div id="members-chart" class="chart-container"></div>
     </div>
     <script data-main="src/agenda-viz.js" src="lib/require.js"></script>
 </body>
