@@ -1,6 +1,7 @@
 define(['agenda-charts', '../lib/reqwest', '../lib/when'], function (Charts, Reqwest, When) {
 
     var d3 = window.d3,
+        BASE_URL = 'http://oknesset.org',
         Model = {
             get : function (url) {
                 var deferred = When.defer(),
@@ -76,13 +77,13 @@ define(['agenda-charts', '../lib/reqwest', '../lib/when'], function (Charts, Req
                     mouseover   : function (party) {
                         var party_id = party[4];
                         members_chart.show(party_id);
-                        parties_chart.selection.all.attr('fill-opacity', function (d) {
-                            return d[4] != party_id ? 0 : .7;
+                        parties_chart.selection.all.transition().duration(500).attr('fill-opacity', function (d) {
+                            return d[4] != party_id ? 0 : .9;
                         });
                     },
                     mouseout    : function (party) {
                         members_chart.hide(party[4]);
-                        parties_chart.selection.all.attr('fill-opacity', .7);
+                        parties_chart.selection.all.transition().duration(300).attr('fill-opacity', 0);
                     },
                     touchstart  : function (party) {
                         var party_id = party[4];
@@ -150,9 +151,13 @@ define(['agenda-charts', '../lib/reqwest', '../lib/when'], function (Charts, Req
             });
 
             // set agenda metadata
-            d3.select('#owner-image > a').append('img').attr('src', 'http://oknesset.org' + agenda.image);
-            d3.select('#agenda-name > a').text(agenda.name);
-            d3.select('#public-owner-name > a').text(agenda.public_owner_name);
+            d3.select('#owner-image > a').append('img')
+                                         .attr('src', BASE_URL + agenda.image).attr('height', '38')
+                                         .attr('href', BASE_URL + agenda.absolute_url);
+            d3.select('#agenda-name > a').text(agenda.name)
+                                         .attr('href', BASE_URL + agenda.absolute_url);
+            d3.select('#public-owner-name > a').text(agenda.public_owner_name)
+                                               .attr('href', BASE_URL + agenda.absolute_url);
             d3.select('#number-of-votes').text(agenda.votes.length);
         }
     );
