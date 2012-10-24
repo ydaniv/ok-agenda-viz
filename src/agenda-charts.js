@@ -20,11 +20,15 @@ define(['../lib/d3.v2', 'agenda-tooltips'], function () {
     var d3 = window.d3;
 
     function Chart (options) {
-        var that = this;
+        var that = this,
+            parent_node;
         this.setData(options.data);
+        // create the chart's canvas
+        this.svg = options.svg || d3.select(options.container || 'body').append('svg');
+        parent_node = this.svg[0][0].offsetParent;
         // set chart dimensions
-        this.height = options.height || 200;
-        this.width = options.width || 500;
+        this.height = options.height || parent_node.offsetHeight;
+        this.width = options.width || parent_node.offsetWidth;
         this.padding = options.padding || {
             x   : 30,
             y   : 30
@@ -42,11 +46,9 @@ define(['../lib/d3.v2', 'agenda-tooltips'], function () {
         this.click = options.click;
         this.touchstart = options.touchstart;
         this.no_axes = options.no_axes;
-        // create the chart's canvas
-        this.svg = options.svg || d3.select(options.container || 'body')
-            .append('svg')
-            .attr('width', this.width)
-            .attr('height', this.height);
+        // set canvas width and height
+        this.svg.attr('width', this.width)
+                .attr('height', this.height);
     }
 
     Chart.prototype = {
@@ -105,17 +107,31 @@ define(['../lib/d3.v2', 'agenda-tooltips'], function () {
             return this;
         },
         createAxes      : function () {
+            var color_grad
             if ( ! this.no_axes ) {
                 // create X axis
-                this.x_axis = d3.svg.axis();
-                this.x_axis.scale(this.x_scale);
-                // draw axes
-                this.svg.call(this.x_axis);
+//                this.x_axis = d3.svg.axis();
+//                this.x_axis.scale(this.x_scale);
+                // create the color axis
+                if ( ! this.color_grad ) {
+                    this.color_grad = this.svg.append('defs').append('linearGradient')
+                                                                .attr('id', 'color-axis');
+                    this.color_axis = this.svg.append('rect')
+                        .attr('x', this.padding.x)
+                        .attr('y', this.height - this.padding.y)
+                        .attr('height', '2px')
+                        .attr('width', this.width - (2 * this.padding.x))
+                        .attr('stroke-width', '0px')
+                        .attr('fill', 'url(#color-axis)');
+                }
+                this.color_grad.selectAll('stop').remove();
+                this.color_grad.append('stop').attr('stop-color', this.color_scale(this.x_in_min)).attr('offset', '0%');
+                this.color_grad.append('stop').attr('stop-color', this.color_scale(this.x_in_max)).attr('offset', '100%');
             }
             return this;
         },
         addEvents       : function () {
-            this.svg.selectAll(this.element).on('mouseover', this.mouseover, false)
+            this.svg.selectAll(this.selector).on('mouseover', this.mouseover, false)
                                             .on('mouseout', this.mouseout, false)
                                             .on('click', this.click, false)
                                             .on('touchstart', this.touchstart, false);
@@ -127,14 +143,12 @@ define(['../lib/d3.v2', 'agenda-tooltips'], function () {
                     .selection.all.call(this.transition, this);
             }
             else {
-                this.svg.data(this.data).selectAll(this.element);
-//                all.exit().call(this.transition, this, true);
-//                all.enter().call(this.transition, this);
+                this.svg.data(this.data).selectAll(this.selector);
             }
             return this;
         },
         showDetails: function(data, i, element) {
-            d3.select(element).attr("stroke", "black");
+//            d3.select(element).attr("stroke", "black");
             var content = data[3];
             return this.tooltip.showTooltip(content, d3.event);
         },
@@ -144,16 +158,17 @@ define(['../lib/d3.v2', 'agenda-tooltips'], function () {
     };
 
     function PartiesChart (options) {
-        var chart = this;
         this.tooltip = Tooltip("parties_tooltip", 200);
 
         Chart.call(this, options);
         this.element = 'circle';
+        this.selector = '.party';
     }
 
     PartiesChart.prototype = extend(Object.create(Chart.prototype), {
         constructor : PartiesChart,
         setData     : function (data) {
+            //# Array.prototype.map
             this.data = data.map(function(party) {
                 // value | 0 is the same as Math.round(value)
                 return [
@@ -218,6 +233,7 @@ define(['../lib/d3.v2', 'agenda-tooltips'], function () {
                 .enter()
                 // add the parties' circles
                 .append(this.element)
+                .attr('class', this.selector.slice(1))
                 // position the circles
                 //TODO: make sure they don't cover each other
                 .attr('cx', function(d) {
@@ -234,7 +250,10 @@ define(['../lib/d3.v2', 'agenda-tooltips'], function () {
                     return chart.color_scale(d[0]);
                 })
                 .attr('fill-opacity', .7)
-                .attr('stroke', '#222222');
+                .attr('stroke', function(d) {
+                    return chart.color_scale(d[0]);
+                })
+                .attr('stroke-width', '2px');
             this.addEvents();
             return this;
         },
@@ -267,8 +286,7 @@ define(['../lib/d3.v2', 'agenda-tooltips'], function () {
                 .setXScale()
                 .createAxes();
             // change data to new selection and redraw the selected party
-            this.svg.data(this.data).selectAll(this.element)
-                //TODO: tween with other events
+            this.svg.data(this.data).selectAll(this.selector)
                 .transition()
                     .delay(500)
                     .duration(500)
@@ -283,8 +301,9 @@ define(['../lib/d3.v2', 'agenda-tooltips'], function () {
         var _self = this;
         Chart.call(this, options);
         this.bar_padding = options.bar_padding || 1;
-        this.stroke = options.stroke || 1;
+        this.stroke = options.stroke || 0;
         this.element = 'rect';
+        this.selector = '.member';
         this.parties_toggle = {};
         this.zoom_in = false;
         this.tooltip = Tooltip("members_tooltip", 200);
@@ -302,6 +321,7 @@ define(['../lib/d3.v2', 'agenda-tooltips'], function () {
     MembersChart.prototype = extend(Object.create(Chart.prototype), {
         constructor : MembersChart,
         setData     : function (data) {
+            //# Array.prototype.map
             this.data = data.map(function(member) {
                 return [
                     member.score,   //0
@@ -339,6 +359,7 @@ define(['../lib/d3.v2', 'agenda-tooltips'], function () {
                 all     : null,
                 getParty: function (id) {
                     if ( !(id in this.parties) ) {
+                        //# Array.prototype.filter
                         this.parties[id] = this.all.filter(function (d, i) {
                             return d[5] === id;
                         });
@@ -349,11 +370,12 @@ define(['../lib/d3.v2', 'agenda-tooltips'], function () {
             };
             this.selection.all = this.setScales()
                 .createAxes()
-                .svg.selectAll(this.element)
+                .svg.selectAll(this.selector)
                 .data(this.data)
                 .enter()
                 // add the member's rectangle
                 .append(this.element)
+                .attr('class', this.selector.slice(1))
                 .attr('x', function(d, i) {
                     return chart.x_scale(d[0]);
                 })
@@ -365,11 +387,11 @@ define(['../lib/d3.v2', 'agenda-tooltips'], function () {
                 .attr('height', ! complete ? 0 : function(d) {
                     return chart.height - chart.padding.y - chart.y_scale(d[1]);
                 })
-                .attr('fill-opacity', .7)
+//                .attr('fill-opacity', .7)
                 .attr('fill', function(d) {
                     return chart.color_scale(d[0]);
-                })
-                .attr('stroke', '#222222');
+                });
+//                .attr('stroke', '#222222');
             if ( complete ) {
                 this.parties_toggle[0] = true;
                 this.select();
@@ -503,7 +525,7 @@ define(['../lib/d3.v2', 'agenda-tooltips'], function () {
                 .setXScale()
                 .createAxes();
             // change data to new selection and redraw the selected party
-            selection = this.svg.data(this.data).selectAll(this.element);
+            selection = this.svg.data(this.data).selectAll(this.selector);
             count = selection[0].length;
             // transition the members to their new X position depending on new zoom
             selection.transition()
