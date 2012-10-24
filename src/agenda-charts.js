@@ -336,7 +336,8 @@ define(['../lib/d3.v2', 'agenda-tooltips'], function () {
                     member.id       //6
                 ];
             }).sort(function (a, b) {
-                return a[0] - b[0];
+                // sort from the higher to the lower ones, to make sure they don't cover each other entirely
+                return b[1] - a[1];
             });
             return this;
         },
