@@ -64,6 +64,7 @@
         }
         #controls {
             clear: both;
+            padding: 5px 0;
         }
         #controls select, #controls button {
             background-color: transparent;
@@ -87,6 +88,24 @@
         #headings {
             float: right;
         }
+        #loader {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 100%;
+            z-index: 1000;
+            background-color: #add8e6;
+        }
+        #loader-message {
+            display: block;
+            position: absolute;
+            width: 80px;
+            height: 20px;
+            left: 50%;
+            top: 50%;
+            margin-left: -40px;
+            margin-top: -10px;
+        }
         #members-chart {
             z-index: 1;
         }
@@ -100,6 +119,7 @@
         }
         #owner-image-anchor {
             display: block;
+            font-size: 0;
         }
         #parties-chart {
             z-index: 10;
@@ -134,6 +154,7 @@
         <div id="members-chart" class="chart-container"></div>
     </div>
     <div id="footer"></div>
+    <div id="loader"><span id="loader-message">טוען נתונים...</span></div>
 </div>
 <script data-main="js/agenda-viz.js" src="js/lib/require.js"></script>
 </body>
