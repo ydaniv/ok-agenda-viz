@@ -25,13 +25,14 @@ define(['../lib/d3.v2', 'agenda-tooltips'], function () {
         this.setData(options.data);
         // create the chart's canvas
         this.svg = options.svg || d3.select(options.container || 'body').append('svg');
-        parent_node = this.svg[0][0].offsetParent;
+        // fix bug in FF - `svg` element has no `offsetParent` property
+        parent_node = this.svg[0][0].offsetParent || this.svg[0][0].parentElement;
         // set chart dimensions
         this.height = options.height || parent_node.offsetHeight;
         this.width = options.width || parent_node.offsetWidth;
         this.padding = options.padding || {
-            x   : 30,
-            y   : 30
+            x   : 10,
+            y   : 10
         };
         this.domains = options.domains;
         this.ranges = options.ranges;
@@ -107,14 +108,13 @@ define(['../lib/d3.v2', 'agenda-tooltips'], function () {
             return this;
         },
         createAxes      : function () {
-            var color_grad
             if ( ! this.no_axes ) {
                 // create X axis
 //                this.x_axis = d3.svg.axis();
 //                this.x_axis.scale(this.x_scale);
                 // create the color axis
                 if ( ! this.color_grad ) {
-                    this.color_grad = this.svg.append('defs').append('linearGradient')
+                    this.color_grad = this.svg.select('defs').append('linearGradient')
                                                                 .attr('id', 'color-axis');
                     this.color_axis = this.svg.append('rect')
                         .attr('x', this.padding.x)
@@ -249,7 +249,7 @@ define(['../lib/d3.v2', 'agenda-tooltips'], function () {
                 .attr('fill', function(d) {
                     return chart.color_scale(d[0]);
                 })
-                .attr('fill-opacity', .7)
+                .attr('fill-opacity', 0)
                 .attr('stroke', function(d) {
                     return chart.color_scale(d[0]);
                 })
@@ -300,6 +300,7 @@ define(['../lib/d3.v2', 'agenda-tooltips'], function () {
     function MembersChart (options) {
         var _self = this;
         Chart.call(this, options);
+        this.bar_width = options.bar_width || 6;
         this.bar_padding = options.bar_padding || 1;
         this.stroke = options.stroke || 0;
         this.element = 'rect';
@@ -316,6 +317,8 @@ define(['../lib/d3.v2', 'agenda-tooltips'], function () {
             if ( type === 'zoom' )
                 _self.in_transition = false;
         });
+
+        this.svg.append('defs');
     }
 
     MembersChart.prototype = extend(Object.create(Chart.prototype), {
@@ -351,9 +354,7 @@ define(['../lib/d3.v2', 'agenda-tooltips'], function () {
             return this;
         },
         render      : function (complete) {
-            var chart = this,
-                w = this.width / this.data.length,
-                bar_width = (w - chart.bar_padding - chart.stroke) | 0 || 1;
+            var chart = this;
 
             this.selection = {
                 all     : null,
@@ -382,7 +383,7 @@ define(['../lib/d3.v2', 'agenda-tooltips'], function () {
                 .attr('y', ! complete ? chart.height - chart.padding.y : function(d) {
                     return chart.y_scale(d[1]);
                 })
-                .attr('width', bar_width)
+                .attr('width', this.bar_width)
                 // if not `complete` then height starts at 0 and then transitioned according to chart height and y_scale
                 .attr('height', ! complete ? 0 : function(d) {
                     return chart.height - chart.padding.y - chart.y_scale(d[1]);
@@ -471,7 +472,7 @@ define(['../lib/d3.v2', 'agenda-tooltips'], function () {
             var count = selection[0].length, counter = 1;
             // transition the radii of all circles
             selection.transition()
-                .duration(200)
+                .duration(400)
                 .delay(function(d, i) {
                     return i * 10;
                 })
@@ -529,10 +530,11 @@ define(['../lib/d3.v2', 'agenda-tooltips'], function () {
             count = selection[0].length;
             // transition the members to their new X position depending on new zoom
             selection.transition()
-                    .delay(500)
+                    .delay(800)
                     .duration(400)
                     .attr('x', function(d, i) {
-                        return chart.x_scale(d[0]);
+                        var x = chart.x_scale(d[0]);
+                        return x === chart.x_out_max ? x - chart.bar_width : x;
                     })
                     .each('start', function () {
                         if ( counter == 1 ) {
