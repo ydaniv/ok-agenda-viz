@@ -162,6 +162,7 @@ define(['agenda-charts', '../lib/reqwest', '../lib/when'], function (Charts, Req
             d3.select('#public-owner-name > a').text(agenda.public_owner_name)
                                                .attr('href', BASE_URL + agenda.absolute_url);
             d3.select('#number-of-votes').text(agenda.votes.length);
+            d3.select('#loader').transition().delay(200).duration(400).style('top', '100%').style('opacity', 0);
         }
     );
 });
