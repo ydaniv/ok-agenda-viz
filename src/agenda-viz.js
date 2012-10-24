@@ -15,13 +15,13 @@ define(['agenda-charts', '../lib/reqwest', '../lib/when'], function (Charts, Req
                         url     : url,
                         type    : 'jsonp',
                         success : function (response) {
-                            console.log(response);
+                            window.console && console.log(response);
                             that.cache(url, response);
                             deferred.resolve(response);
                         },
                         error   : function () {
                             try {
-                                console.error('Failed to get ' + url, arguments);
+                                window.console && console.error('Failed to get ' + url, arguments);
                             } catch (e) {alert('Failed to get ' + url);}
                             deferred.reject(arguments[1]);
                         }
@@ -30,16 +30,21 @@ define(['agenda-charts', '../lib/reqwest', '../lib/when'], function (Charts, Req
                 return deferred.promise;
             },
             cache   : function (key, data) {
-                if ( arguments.length === 1 ) {
-                    return JSON.parse(localStorage.getItem(key));
-                }
-                else {
-                    localStorage.setItem(key, JSON.stringify(data));
-                }
+                try {
+                    if ( arguments.length === 1 ) {
+                        return JSON.parse(localStorage.getItem(key));
+                    }
+                    else {
+                        localStorage.setItem(key, JSON.stringify(data));
+                    }
+                } catch (e) {}
             }
         },
         Parties = Object.create(Model),
-        Agenda = Object.create(Model);
+        Agenda = Object.create(Model),
+        // `document.body` in IE8
+        window_height = document.body ? document.body.clientHeight : window.innerHeight,
+        window_width = document.body ? document.body.clientWidth : window.innerWidth;
 
     When.all(
         [Parties.get('http://oknesset.org/api/v2/party/?callback=?'),
@@ -49,13 +54,15 @@ define(['agenda-charts', '../lib/reqwest', '../lib/when'], function (Charts, Req
                 agenda = responses[1],
                 parties_menu = d3.select('#parties-menu'),
                 toggle_zoom = d3.select('#toggle-zoom'),
+                //# Array.prototype.map
                 parties_data = agenda.parties.map(function (item, i) {
                     item.size = parties.objects[i].number_of_seats;
-                    item.volume = 100;
                     item.id = parties.objects[i].id;
                     return item;
                 }),
+                //# Array.prototype.forEach
                 members_data = (agenda.parties.forEach(function (party) {
+                    //# Array.prototype.forEach
                     agenda.members.forEach(function (member) {
                         if ( party.name === member.party ) {
                             member.party_id = party.id;
@@ -66,13 +73,16 @@ define(['agenda-charts', '../lib/reqwest', '../lib/when'], function (Charts, Req
                 parties_chart = new Charts.PartiesChart({
                     data        : parties_data,
                     container   : '#parties-chart',
-                    height      : 300,
-                    width       : 800,
                     mouseover   : function (party) {
-                        members_chart.show(party[4]);
+                        var party_id = party[4];
+                        members_chart.show(party_id);
+                        parties_chart.selection.all.attr('fill-opacity', function (d) {
+                            return d[4] != party_id ? 0 : .7;
+                        });
                     },
                     mouseout    : function (party) {
                         members_chart.hide(party[4]);
+                        parties_chart.selection.all.attr('fill-opacity', .7);
                     },
                     touchstart  : function (party) {
                         var party_id = party[4];
@@ -90,9 +100,7 @@ define(['agenda-charts', '../lib/reqwest', '../lib/when'], function (Charts, Req
 
                 members_chart = new Charts.MembersChart({
                     data        : members_data,
-                    container   : '#members-chart',
-                    height      : 300,
-                    width       : 800
+                    container   : '#members-chart'
                 }).render(),
                 parties_view = true;
 
@@ -123,12 +131,11 @@ define(['agenda-charts', '../lib/reqwest', '../lib/when'], function (Charts, Req
                     members_chart.zoom(parties_chart.zoom_in ? 'all' : false);
                 }
             });
-
+            //# Array.prototype.reduce
             parties_menu.html(parties.objects.reduce(function (html, item) {
                     return html + '<option value="' + item.id + '">' + item.name + '</option>';
                 }, '<option value="0">כל המפלגות</option>'))
                 .on('change', function (d) {
-                    //TODO: publish an event that transitions current display out and selected display in
                     dispatcher.change_party(d3.event.target.value);
                 });
 
@@ -141,6 +148,12 @@ define(['agenda-charts', '../lib/reqwest', '../lib/when'], function (Charts, Req
                     members_chart.zoom();
                 }
             });
+
+            // set agenda metadata
+            d3.select('#owner-image > a').append('img').attr('src', 'http://oknesset.org' + agenda.image);
+            d3.select('#agenda-name > a').text(agenda.name);
+            d3.select('#public-owner-name > a').text(agenda.public_owner_name);
+            d3.select('#number-of-votes').text(agenda.votes.length);
         }
     );
 });
