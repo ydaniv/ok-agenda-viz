@@ -77,13 +77,13 @@ define(['agenda-charts', '../lib/reqwest', '../lib/when'], function (Charts, Req
                     mouseover   : function (party) {
                         var party_id = party[4];
                         members_chart.show(party_id);
-                        parties_chart.selection.all.transition().duration(500).attr('fill-opacity', function (d) {
+                        parties_chart.selection.all.attr('fill-opacity', function (d) {
                             return d[4] != party_id ? 0 : .9;
                         });
                     },
                     mouseout    : function (party) {
                         members_chart.hide(party[4]);
-                        parties_chart.selection.all.transition().duration(300).attr('fill-opacity', 0);
+                        parties_chart.selection.all.attr('fill-opacity', 0);
                     },
                     touchstart  : function (party) {
                         var party_id = party[4];
@@ -93,6 +93,9 @@ define(['agenda-charts', '../lib/reqwest', '../lib/when'], function (Charts, Req
                             dispatcher.change_party(party_id);
                         }
                         else {
+                            parties_chart.selection.all.attr('fill-opacity', function (d) {
+                                return d[4] != party_id ? 0 : .9;
+                            });
                             members_chart.single(party_id, true);
                         }
                     },
@@ -113,11 +116,14 @@ define(['agenda-charts', '../lib/reqwest', '../lib/when'], function (Charts, Req
             ];
 
             dispatcher.on('change_party', function (party_id) {
-                var is_all = !+party_id;
+                var is_all = !+party_id,
+                    zoom_out = function () {
+                        members_chart.zoom(parties_chart.zoom_in ? 'all' : false, true);
+                    };
                 parties_chart.selection.all.each(function (d) {
                     var id = d[4];
                     if ( party_id != id && members_chart.parties_toggle[id] ) {
-                        members_chart.hide(id, true);
+                        members_chart.hide(id, true, is_all && zoom_out);
                     }
                     if ( party_id == id ) {
                         members_chart.show(id, true);
@@ -128,9 +134,6 @@ define(['agenda-charts', '../lib/reqwest', '../lib/when'], function (Charts, Req
                 parties_view = is_all;
                 // toggle all parties
                 parties_chart.selection.all.call(parties_chart.transition, parties_chart, !is_all);
-                if ( is_all ) {
-                    members_chart.zoom(parties_chart.zoom_in ? 'all' : false);
-                }
             });
             //# Array.prototype.reduce
             parties_menu.html(parties.objects.reduce(function (html, item) {

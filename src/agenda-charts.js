@@ -436,7 +436,7 @@ define(['../lib/d3.v2', 'agenda-tooltips'], function () {
             this.toggle(id, dont_set);
             return this;
         },
-        show        : function (party, override_persist) {
+        show        : function (party, override_persist, callback) {
             var id;
             // if party is NOT party_id but a selection
             id = typeof party === 'number' ? party : party.data()[0][5];
@@ -448,11 +448,11 @@ define(['../lib/d3.v2', 'agenda-tooltips'], function () {
                 // if toggling to active then select
                 this.select(id)
                     // transition in or out according to new state - `true` => 'out'
-                    .call(this.transition, this);
+                    .call(this.transition, this, false, callback);
             }
             return this;
         },
-        hide        : function (party, override_persist) {
+        hide        : function (party, override_persist, callback) {
             var id;
             // if party is NOT party_id but a selection
             id = typeof party === 'number' ? party : party.data()[0][5];
@@ -464,11 +464,11 @@ define(['../lib/d3.v2', 'agenda-tooltips'], function () {
                 // if toggling to active then select
                 this.select(id, true)
                     // transition in or out according to new state - `true` => 'out'
-                    .call(this.transition, this, true);
+                    .call(this.transition, this, true, callback);
             }
             return this;
         },
-        transition  : function (selection, chart, transit_out) {
+        transition  : function (selection, chart, transit_out, callback) {
             var count = selection[0].length, counter = 1;
             // transition the radii of all circles
             selection.transition()
@@ -490,13 +490,14 @@ define(['../lib/d3.v2', 'agenda-tooltips'], function () {
                 .each('end', function () {
                     if ( counter === count) {
                         chart.dispatcher.end('toggle');
+                        callback && callback();
                     } else {
                         counter += 1;
                     }
                 });
             return chart;
         },
-        zoom        : function (is_in) {
+        zoom        : function (is_in, immediate) {
             //TODO: add transition to scale change
             var chart = this,
                 getScore = prop(0),
@@ -529,25 +530,27 @@ define(['../lib/d3.v2', 'agenda-tooltips'], function () {
             selection = this.svg.data(this.data).selectAll(this.selector);
             count = selection[0].length;
             // transition the members to their new X position depending on new zoom
-            selection.transition()
+            selection = (immediate ? selection : selection.transition()
                     .delay(800)
-                    .duration(400)
+                    .duration(400))
                     .attr('x', function(d, i) {
                         var x = chart.x_scale(d[0]);
                         return x === chart.x_out_max ? x - chart.bar_width : x;
-                    })
-                    .each('start', function () {
-                        if ( counter == 1 ) {
-                            chart.dispatcher.start('zoom');
-                        }
-                    })
-                    .each('end', function () {
-                        if ( counter === count) {
-                            chart.dispatcher.end('zoom');
-                        } else {
-                            counter += 1;
-                        }
                     });
+            if ( ! immediate ) {
+                selection.each('start', function () {
+                    if ( counter == 1 ) {
+                        chart.dispatcher.start('zoom');
+                    }
+                })
+                .each('end', function () {
+                    if ( counter === count) {
+                        chart.dispatcher.end('zoom');
+                    } else {
+                        counter += 1;
+                    }
+                });
+            }
             return this;
         }
     });
