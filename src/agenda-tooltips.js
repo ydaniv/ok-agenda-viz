@@ -41,6 +41,7 @@ function Tooltip(tooltipId, width){
 		}
 		d3.select(ttid).style("top", tttop + "px");
 		d3.select(ttid).style("left", ttleft + "px");
+		d3.select(ttid).style("pointer-events", "none");
 	}
 
 	return {
