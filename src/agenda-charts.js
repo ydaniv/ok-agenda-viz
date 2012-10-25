@@ -38,12 +38,12 @@ define(['../lib/d3.v2', 'agenda-tooltips'], function () {
         this.domains = options.domains;
         this.ranges = options.ranges;
         this.mouseover = function(d,i) {
-            that.showDetails(d, i, this);
-            options.mouseover && options.mouseover(d, i, this);
+            that.showDetails(d, i);
+            options.mouseover && options.mouseover.call(this, d, i);
         };
         this.mouseout = function(d, i) {
-            that.hideDetails(d, i, this);
-            options.mouseout && options.mouseout(d, i, this);
+            that.hideDetails(d, i);
+            options.mouseout && options.mouseout.call(this, d, i);
         };
         this.click = options.click;
         this.touchstart = options.touchstart;
