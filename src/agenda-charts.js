@@ -51,6 +51,9 @@ define(['../lib/d3.v2', 'agenda-tooltips'], function () {
         // set canvas width and height
         this.svg.attr('width', this.width)
                 .attr('height', this.height);
+        if ( options.id ) {
+            this.svg.attr('id', options.id);
+        }
     }
 
     Chart.prototype = {

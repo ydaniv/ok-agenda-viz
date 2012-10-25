@@ -73,7 +73,8 @@ define(['agenda-charts', '../lib/reqwest', '../lib/when'], function (Charts, Req
                 dispatcher = d3.dispatch('change_party'),
                 parties_chart = new Charts.PartiesChart({
                     data        : parties_data,
-                    container   : '#parties-chart',
+                    container   : '#charts',
+                    id          : 'parties-canvas',
                     mouseover   : function (party) {
                         var party_id = party[4];
                         members_chart.show(party_id);
@@ -102,7 +103,8 @@ define(['agenda-charts', '../lib/reqwest', '../lib/when'], function (Charts, Req
 
                 members_chart = new Charts.MembersChart({
                     data        : members_data,
-                    container   : '#members-chart'
+                    container   : '#charts',
+                    id          : 'members-canvas'
                 }).render(),
                 parties_view = true;
 
