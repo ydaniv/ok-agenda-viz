@@ -392,11 +392,9 @@ define(['../lib/d3.v2', 'agenda-tooltips'], function (disregard, Tooltip) {
                 .attr('height', ! complete ? 0 : function(d) {
                     return chart.height - chart.padding.y - chart.y_scale(d[1]);
                 })
-//                .attr('fill-opacity', .7)
                 .attr('fill', function(d) {
                     return chart.color_scale(d[0]);
                 });
-//                .attr('stroke', '#222222');
             if ( complete ) {
                 this.parties_toggle[0] = true;
                 this.select();
