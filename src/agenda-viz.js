@@ -135,13 +135,34 @@ define(['agenda-charts', '../lib/reqwest', '../lib/when'], function (Charts, Req
                 // toggle all parties
                 parties_chart.selection.all.call(parties_chart.transition, parties_chart, !is_all);
             });
-            //# Array.prototype.reduce
-            parties_menu.html(parties.objects.reduce(function (html, item) {
-                    return html + '<option value="' + item.id + '">' + item.name + '</option>';
-                }, '<option value="0">כל המפלגות</option>'))
-                .on('change', function (d) {
+            // IE can't set innerHTML of select, need to use the .options.add interface
+            if ( typeof parties_menu[0][0].options.add == 'function' ) {
+                parties_menu[0][0].options.add(function () {
+                    var option = document.createElement('option');
+                    option.text = 'כל המפלגות';
+                    option.value = '0';
+                    return option;
+                }());
+                //# Array.prototype.forEach
+                parties.objects.forEach(function (item) {
+                    var option = document.createElement('option');
+                    option.text = item.name;
+                    option.value = item.id;
+                    parties_menu[0][0].options.add(option);
+                });
+                parties_menu.on('change', function (d) {
                     dispatcher.change_party(d3.event.target.value);
                 });
+            }
+            else {
+                //# Array.prototype.reduce
+                parties_menu.html(parties.objects.reduce(function (html, item) {
+                    return html + '<option value="' + item.id + '">' + item.name + '</option>';
+                }, '<option value="0">כל המפלגות</option>'));
+            }
+            parties_menu.on('change', function (d) {
+                dispatcher.change_party(d3.event.target.value);
+            });
 
             toggle_zoom.on('click', function (d) {
                 if ( parties_view ) {
