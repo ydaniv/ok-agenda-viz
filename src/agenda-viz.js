@@ -134,6 +134,8 @@ define(['agenda-charts', '../lib/reqwest', '../lib/when'], function (Charts, Req
                 parties_view = is_all;
                 // toggle all parties
                 parties_chart.selection.all.call(parties_chart.transition, parties_chart, !is_all);
+                // toggle the transparency of the parties chart to events, to enable those on the members chart that's underneath it
+                parties_chart.svg.classed('no-events', !is_all);
             });
             // IE can't set innerHTML of select, need to use the .options.add interface
             if ( typeof parties_menu[0][0].options.add == 'function' ) {
