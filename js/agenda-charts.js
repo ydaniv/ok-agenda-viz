@@ -26,7 +26,8 @@ define(['lib/d3.v2', 'agenda-tooltips'], function () {
         // create the chart's canvas
         this.svg = options.svg || d3.select(options.container || 'body').append('svg');
         // fix bug in FF - `svg` element has no `offsetParent` property
-        parent_node = this.svg[0][0].offsetParent || this.svg[0][0].parentElement;
+        // fix bug in IE9- - doesn't have neither
+        parent_node = this.svg[0][0].offsetParent || this.svg[0][0].parentElement || this.svg[0][0].parentNode;
         // set chart dimensions
         this.height = options.height || parent_node.offsetHeight;
         this.width = options.width || parent_node.offsetWidth;
@@ -37,12 +38,12 @@ define(['lib/d3.v2', 'agenda-tooltips'], function () {
         this.domains = options.domains;
         this.ranges = options.ranges;
         this.mouseover = function(d,i) {
-            that.showDetails(d, i, this);
-            options.mouseover(d, i, this);
+            that.showDetails(d, i);
+            options.mouseover && options.mouseover.call(this, d, i);
         };
         this.mouseout = function(d, i) {
-            that.hideDetails(d, i, this);
-            options.mouseout(d, i, this);
+            that.hideDetails(d, i);
+            options.mouseout && options.mouseout.call(this, d, i);
         };
         this.click = options.click;
         this.touchstart = options.touchstart;
@@ -158,7 +159,7 @@ define(['lib/d3.v2', 'agenda-tooltips'], function () {
     };
 
     function PartiesChart (options) {
-        this.tooltip = Tooltip("parties_tooltip", 200);
+        this.tooltip = Tooltip("parties_tooltip");
 
         Chart.call(this, options);
         this.element = 'circle';
@@ -307,7 +308,7 @@ define(['lib/d3.v2', 'agenda-tooltips'], function () {
         this.selector = '.member';
         this.parties_toggle = {};
         this.zoom_in = false;
-        this.tooltip = Tooltip("members_tooltip", 200);
+        this.tooltip = Tooltip("members_tooltip");
         this.dispatcher = d3.dispatch('start', 'end');
         this.dispatcher.on('start', function (type) {
             if ( type === 'zoom' )
