@@ -1,4 +1,4 @@
-define(['../lib/d3.v2', 'agenda-tooltips'], function () {
+define(['../lib/d3.v2', 'agenda-tooltips'], function (disregard, Tooltip) {
 
     // some utilities
     function prop (p) {
@@ -38,11 +38,11 @@ define(['../lib/d3.v2', 'agenda-tooltips'], function () {
         this.domains = options.domains;
         this.ranges = options.ranges;
         this.mouseover = function(d,i) {
-            that.showDetails(d, i);
+            that.showDetails(d, d3.select(this));
             options.mouseover && options.mouseover.call(this, d, i);
         };
         this.mouseout = function(d, i) {
-            that.hideDetails(d, i);
+            that.hideDetails();
             options.mouseout && options.mouseout.call(this, d, i);
         };
         this.click = options.click;
@@ -150,20 +150,10 @@ define(['../lib/d3.v2', 'agenda-tooltips'], function () {
                 this.svg.data(this.data).selectAll(this.selector);
             }
             return this;
-        },
-        showDetails: function(data, i, element) {
-//            d3.select(element).attr("stroke", "black");
-            var content = data[3];
-            return this.tooltip.showTooltip(content, d3.event);
-        },
-        hideDetails: function(data, i, element) {
-            return this.tooltip.hideTooltip();
         }
     };
 
     function PartiesChart (options) {
-        this.tooltip = Tooltip("parties_tooltip");
-
         Chart.call(this, options);
         this.element = 'circle';
         this.selector = '.party';
@@ -258,6 +248,7 @@ define(['../lib/d3.v2', 'agenda-tooltips'], function () {
                     return chart.color_scale(d[0]);
                 })
                 .attr('stroke-width', '2px');
+            this.tooltip = Tooltip(this.svg);
             this.addEvents();
             return this;
         },
@@ -298,6 +289,15 @@ define(['../lib/d3.v2', 'agenda-tooltips'], function () {
                         return chart.x_scale(d[0]);
                     });
             return this;
+        },
+        showDetails : function(data, element) {
+            var content = data[3],
+                x = element.attr('cx'),
+                y = element.attr('cy') - element.attr('r');
+            return this.tooltip.showTooltip(content, x | 0, y | 0);
+        },
+        hideDetails : function() {
+            return this.tooltip.hideTooltip();
         }
     });
 
@@ -311,7 +311,6 @@ define(['../lib/d3.v2', 'agenda-tooltips'], function () {
         this.selector = '.member';
         this.parties_toggle = {};
         this.zoom_in = false;
-        this.tooltip = Tooltip("members_tooltip");
         this.dispatcher = d3.dispatch('start', 'end');
         this.dispatcher.on('start', function (type) {
             if ( type === 'zoom' )
@@ -402,6 +401,7 @@ define(['../lib/d3.v2', 'agenda-tooltips'], function () {
                 this.parties_toggle[0] = true;
                 this.select();
             }
+            this.tooltip = Tooltip(this.svg);
             this.addEvents();
             return this;
         },
@@ -557,6 +557,15 @@ define(['../lib/d3.v2', 'agenda-tooltips'], function () {
                 });
             }
             return this;
+        },
+        showDetails : function(data, element) {
+            var content = data[3],
+                x = element.attr('x'),
+                y = element.attr('y');
+            return this.tooltip.showTooltip(content, x | 0, y | 0);
+        },
+        hideDetails : function() {
+            return this.tooltip.hideTooltip();
         }
     });
 

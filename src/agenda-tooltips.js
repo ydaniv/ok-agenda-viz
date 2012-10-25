@@ -1,50 +1,49 @@
-function Tooltip(tooltipId, width){
-	d3.select("body").append("div").attr("class", "tooltip").attr("id", tooltipId);
+define(['../lib/d3.v2'], function () {
+    var d3 = window.d3;
 
-	if(width){
-		d3.select("#"+tooltipId).style("width", width + 'px');
-	}
+    function Tooltip (svg) {
+        if ( ! (this instanceof Tooltip) ) return new Tooltip(svg);
 
-	hideTooltip();
+        this.container = svg.append('g');
+        this.tooltip = this.container.append('rect')
+                            .attr('width', '40')
+                            .attr('height', '40')
+                            .attr('ry', '10')
+                            .attr('rx', '10')
+                            .attr('class', 'tooltip');
+        this.text = this.container.append('text')
+                                .attr('font-family', 'sans-serif')
+                                .attr('fill', '#000000')
+                                .attr('font-size', 12);
+        this.hideTooltip();
+    }
 
-	function showTooltip(content, event){
-		d3.select("#"+tooltipId).html(content);
-		d3.select("#"+tooltipId).style("display", "block");
+    Tooltip.prototype = {
+        constructor     : Tooltip,
+        showTooltip     : function (content, x, y) {
+            this.text.text(content);
+            this.updatePosition(x, y);
+            this.container.style("visibility", "visible");
+        },
+        hideTooltip     : function () {
+            this.container.style("visibility", "hidden");
+        },
+        updatePosition  : function (x, y) {
+            var padding = 10*2;
+            var margin = 10;
+            var text_w = +this.text.style('width').slice(0, -2) | 0;
+            var text_h = +this.text.style('height').slice(0, -2) | 0;
+            var box_width = text_w + padding;
+            var box_height = text_h + padding;
 
-		updatePosition(event);
-	}
+            this.tooltip.attr('width', box_width)
+                        .attr('height', box_height)
+                        .attr('x', x - box_width/2)
+                        .attr('y', y - box_height - margin);
+            this.text.attr('x', x + text_w/2)
+                        .attr('y', y - text_h - margin);
+        }
+    };
 
-	function hideTooltip(){
-        d3.select("#"+tooltipId).style("display", "none");
-	}
-
-	function updatePosition(event){
-		var ttid = "#"+tooltipId;
-		var xOffset = 20;
-		var yOffset = 10;
-
-		var ttw = d3.select(ttid).style('width');
-		var tth = d3.select(ttid).style('height');
-		var wscrY = d3.select("body").property('scrollTop');
-		var wscrX = d3.select("body").property('scrollLeft');
-		var curX = document.all ? event.clientX + wscrX : event.pageX;
-		var curY = document.all ? event.clientY + wscrY : event.pageY;
-		var ttleft = ((curX - wscrX + xOffset*2 + ttw) > window.innerWidth) ? curX - ttw - xOffset*2 : curX + xOffset;
-		if (ttleft < wscrX + xOffset){
-			ttleft = wscrX + xOffset;
-		}
-		var tttop = ((curY - wscrY + yOffset*2 + tth) > window.innerHeight) ? curY - tth - yOffset*2 : curY + yOffset;
-		if (tttop < wscrY + yOffset){
-			tttop = curY + yOffset;
-		}
-		d3.select(ttid).style("top", tttop + "px");
-		d3.select(ttid).style("left", ttleft + "px");
-		d3.select(ttid).style("pointer-events", "none");
-	}
-
-	return {
-		showTooltip: showTooltip,
-		hideTooltip: hideTooltip,
-		updatePosition: updatePosition
-	};
-}
+    return Tooltip;
+});
