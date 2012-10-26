@@ -2,6 +2,10 @@ define(['agenda-charts', '../lib/reqwest', '../lib/when'], function (Charts, Req
 
     var d3 = window.d3,
         BASE_URL = 'http://oknesset.org',
+        agenda_id = (function () {
+            var match = window.location.search.match(/agenda_id=(\d+)/i);
+            return (match && match[1]) || 2;
+        }()),
         Model = {
             get : function (url) {
                 var deferred = When.defer(),
@@ -47,9 +51,10 @@ define(['agenda-charts', '../lib/reqwest', '../lib/when'], function (Charts, Req
         window_height = document.body ? document.body.clientHeight : window.innerHeight,
         window_width = document.body ? document.body.clientWidth : window.innerWidth;
 
+    // when.js also wraps the resolved and rejected calls in `try-catch` statements
     When.all(
         [Parties.get('http://oknesset.org/api/v2/party/?callback=?'),
-        Agenda.get('http://oknesset.org/api/v2/agenda/' + 26 + '/?callback=?')],
+        Agenda.get('http://oknesset.org/api/v2/agenda/' + agenda_id + '/?callback=?')],
         function (responses) {
             var parties = responses[0],
                 agenda = responses[1],
