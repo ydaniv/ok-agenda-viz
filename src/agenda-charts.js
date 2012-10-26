@@ -130,6 +130,11 @@ define(['../lib/d3.v2', 'agenda-tooltips'], function (disregard, Tooltip) {
                 }
                 this.color_grad.selectAll('stop').remove();
                 this.color_grad.append('stop').attr('stop-color', this.color_scale(this.x_in_min)).attr('offset', '0%');
+                // if the X Domain's min and max are around the middle (0) 
+                if ( this.x_in_min < this.x_in_med && this.x_in_med < this.x_in_max ) {
+                    // then add a middle color stop (to gray)
+                    this.color_grad.append('stop').attr('stop-color', this.color_scale(this.x_in_med)).attr('offset', ((((this.x_in_med - this.x_in_min)/(this.x_in_max - this.x_in_min)) * 100) | 0) + '%');
+                }
                 this.color_grad.append('stop').attr('stop-color', this.color_scale(this.x_in_max)).attr('offset', '100%');
             }
             return this;
@@ -188,8 +193,7 @@ define(['../lib/d3.v2', 'agenda-tooltips'], function (disregard, Tooltip) {
             this.x_out_min = defined(x_min, this.padding.x);
             this.x_out_max = defined(x_max, this.width - this.padding.x);
             this.y_out_min = defined(y_min, this.height - this.padding.y - this.r_in_max * 2);
-            //TODO: just placing them in the middle for now until we have proper volume - then change range's max
-            this.y_out_max = defined(y_max, this.height / 2);
+            this.y_out_max = defined(y_max, this.padding.y + this.r_in_max * 2);
             this.r_out_min = defined(r_min, this.r_in_min * 2);
             this.r_out_max = defined(r_max, this.r_in_max * 2);
             return this;
@@ -501,7 +505,6 @@ define(['../lib/d3.v2', 'agenda-tooltips'], function (disregard, Tooltip) {
             return chart;
         },
         zoom        : function (is_in, immediate) {
-            //TODO: add transition to scale change
             var chart = this,
                 getScore = prop(0),
                 counter = 1,
