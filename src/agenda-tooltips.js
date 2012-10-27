@@ -1,6 +1,5 @@
-define(['../lib/d3.v2'], function () {
-    var d3 = window.d3,
-        FONT_SIZE = 16,
+define(function () {
+    var FONT_SIZE = 16,
         flor = function (val, _flor) {
             return val < _flor ? _flor : val;
         },
@@ -68,7 +67,7 @@ define(['../lib/d3.v2'], function () {
             y_box = y - box_height - margin;
 
             x_box = ciel(flor(x_box, 2), this.canvas_width - box_width);
-            y_box = flor(y_box, image_margin + 2);
+            y_box = flor(y_box, (this.image ? image_margin : 0) + 2);
 
             if ( this.image ) {
                 this.image.attr('x', x_box + box_width/2 - 21)
