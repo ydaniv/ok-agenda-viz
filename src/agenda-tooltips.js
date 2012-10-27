@@ -10,7 +10,7 @@ define(['../lib/d3.v2'], function () {
     function Tooltip (svg) {
         if ( ! (this instanceof Tooltip) ) return new Tooltip(svg);
 
-        this.container = svg.append('g');
+        this.container = svg.append('g').style('pointer-events', 'none');
         this.tooltip = this.container.append('rect')
                             .attr('width', '40')
                             .attr('height', '40')
