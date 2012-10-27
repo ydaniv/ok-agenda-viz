@@ -27,9 +27,18 @@ define(['../lib/d3.v2'], function () {
 
     Tooltip.prototype = {
         constructor     : Tooltip,
-        showTooltip     : function (content, color, x, y) {
+        showTooltip     : function (content, color, x, y, image) {
             this.text.text(content);
             this.tooltip.attr('fill', color);
+            if ( this.image ) {
+                this.image.remove();
+            }
+            if ( image ) {
+                this.image = this.container.append('image')
+                                            .attr('width', 45)
+                                            .attr('height', 60)
+                                            .attr('xlink:href', image);
+            }
             this.updatePosition(x, y);
             this.container.style("visibility", "visible");
         },
@@ -39,6 +48,7 @@ define(['../lib/d3.v2'], function () {
         updatePosition  : function (x, y) {
             var padding = 10,
                 margin = 10,
+                image_margin = 50,
                 text_w = +this.text.style('width').slice(0, -2) | 0,
                 text_h = +this.text.style('height').slice(0, -2) | 0,
                 box_width = text_w + 2*padding,
@@ -47,8 +57,12 @@ define(['../lib/d3.v2'], function () {
                 y_box = y - box_height - margin;
             
             x_box = ciel(flor(x_box, 2), this.canvas_width - box_width);
-            y_box = flor(y_box, 2);
+            y_box = flor(y_box, image_margin + 2);
 
+            if ( this.image ) {
+                this.image.attr('x', x_box + box_width/2 - 21)
+                            .attr('y', y_box - image_margin);
+            }
             this.tooltip.attr('width', box_width)
                         .attr('height', box_height)
                         .attr('x', x_box)

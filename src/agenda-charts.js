@@ -357,7 +357,7 @@ define(['../lib/d3.v2', 'agenda-tooltips'], function (disregard, Tooltip) {
                     member.name,    //3
                     member.party,   //4
                     member.party_id,//5
-                    member.id       //6
+                    member.img_url  //6
                 ];
             }).sort(function (a, b) {
                 // sort from the higher to the lower ones, to make sure they don't cover each other entirely
@@ -580,7 +580,7 @@ define(['../lib/d3.v2', 'agenda-tooltips'], function (disregard, Tooltip) {
             var content = data[3],
                 x = element.attr('x'),
                 y = element.attr('y');
-            return this.tooltip.showTooltip(content, this.color_scale(data[0]), x | 0, y | 0);
+            return this.tooltip.showTooltip(content, this.color_scale(data[0]), x | 0, y | 0, data[6]);
         },
         hideDetails : function() {
             return this.tooltip.hideTooltip();

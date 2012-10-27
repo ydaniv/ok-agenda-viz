@@ -55,6 +55,7 @@ define(['agenda-charts', '../lib/reqwest', '../lib/when'], function (Charts, Req
         },
         Parties = Object.create(Model),
         Agenda = Object.create(Model),
+        Members = Object.create(Model),
         embed_overlay = d3.select('#embed-overlay'),
         share_overlay = d3.select('#share-overlay'),
         embed_ovelay_on = false,
@@ -64,10 +65,12 @@ define(['agenda-charts', '../lib/reqwest', '../lib/when'], function (Charts, Req
     // when.js also wraps the resolved and rejected calls in `try-catch` statements
     When.all(
         [Parties.get('http://oknesset.org/api/v2/party/?callback=?'),
-        Agenda.get('http://oknesset.org/api/v2/agenda/' + agenda_id + '/?callback=?')],
+        Agenda.get('http://oknesset.org/api/v2/agenda/' + agenda_id + '/?callback=?'),
+        Members.get('http://oknesset.org/api/v2/member/?callback=?')],
         function (responses) {
             var parties = responses[0],
                 agenda = responses[1],
+                members = responses[2],
                 parties_menu = d3.select('#parties-menu'),
                 toggle_zoom = d3.select('#toggle-zoom'),
                 //# Array.prototype.map
@@ -79,9 +82,10 @@ define(['agenda-charts', '../lib/reqwest', '../lib/when'], function (Charts, Req
                 //# Array.prototype.forEach
                 members_data = (agenda.parties.forEach(function (party) {
                     //# Array.prototype.forEach
-                    agenda.members.forEach(function (member) {
+                    agenda.members.forEach(function (member, i) {
                         if ( party.name === member.party ) {
                             member.party_id = party.id;
+                            member.img_url = members.objects[i].img_url;
                         }
                     });
                 }), agenda.members),
