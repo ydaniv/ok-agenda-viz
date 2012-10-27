@@ -123,7 +123,19 @@ define(['agenda-charts', '../lib/reqwest', '../lib/when'], function (Charts, Req
                 members_chart = new Charts.MembersChart({
                     data        : members_data,
                     container   : '#charts',
-                    id          : 'members-canvas'
+                    id          : 'members-canvas',
+                    click       : function (member, i) {
+                        window.open(BASE_URL + member[7]);
+                    },
+                    touchstart  : function (member, i) {
+                        if ( members_chart.focused_member === i ) {
+                            window.open(BASE_URL + member[7]);
+                        }
+                        else {
+                            members_chart.focused_member = i;
+                            members_chart.showDetails(member, d3.select(this));
+                        }
+                    }
                 }).render(),
                 parties_view = true;
 

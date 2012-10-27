@@ -351,13 +351,14 @@ define(['../lib/d3.v2', 'agenda-tooltips'], function (disregard, Tooltip) {
             //# Array.prototype.map
             this.data = data.map(function(member) {
                 return [
-                    member.score,   //0
-                    member.volume,  //1
-                    member.rank,    //2
-                    member.name,    //3
-                    member.party,   //4
-                    member.party_id,//5
-                    member.img_url  //6
+                    member.score,       //0
+                    member.volume,      //1
+                    member.rank,        //2
+                    member.name,        //3
+                    member.party,       //4
+                    member.party_id,    //5
+                    member.img_url,     //6
+                    member.absolute_url //7
                 ];
             }).sort(function (a, b) {
                 // sort from the higher to the lower ones, to make sure they don't cover each other entirely
