@@ -93,7 +93,7 @@ define(['agenda-charts', '../lib/reqwest', '../lib/when'], function (Charts, Req
                     mouseover   : function (party) {
                         var party_id = party[4];
                         members_chart.show(party_id);
-                        d3.select(this).transition().delay(200).duration(200).attr('fill-opacity', .9);
+                        d3.select(this).transition().delay(200).duration(200).attr('fill-opacity', .4);
                     },
                     mouseout    : function (party) {
                         members_chart.hide(party[4]);
@@ -108,7 +108,7 @@ define(['agenda-charts', '../lib/reqwest', '../lib/when'], function (Charts, Req
                         }
                         else {
                             parties_chart.selection.all.attr('fill-opacity', function (d) {
-                                return d[4] != party_id ? 0 : .9;
+                                return d[4] != party_id ? 0 : .4;
                             });
                             members_chart.single(party_id, true);
                         }

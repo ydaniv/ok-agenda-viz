@@ -19,17 +19,17 @@ define(['../lib/d3.v2'], function () {
                             .attr('class', 'tooltip');
         this.text = this.container.append('text')
                                 .attr('font-family', 'sans-serif')
-                                .attr('fill', '#000000')
-                                .attr('font-size', 12);
+                                .attr('fill', '#fff')
+                                .attr('font-size', 16);
         this.canvas_width = svg.attr('width');
-        this.box_stroke_width = +this.tooltip.style('stroke-width').slice(0, -2);
         this.hideTooltip();
     }
 
     Tooltip.prototype = {
         constructor     : Tooltip,
-        showTooltip     : function (content, x, y) {
+        showTooltip     : function (content, color, x, y) {
             this.text.text(content);
+            this.tooltip.attr('fill', color);
             this.updatePosition(x, y);
             this.container.style("visibility", "visible");
         },
@@ -46,15 +46,15 @@ define(['../lib/d3.v2'], function () {
                 x_box = x - box_width/2,
                 y_box = y - box_height - margin;
             
-            x_box = ciel(flor(x_box, this.box_stroke_width), this.canvas_width - box_width - 2 * this.box_stroke_width);
-            y_box = flor(y_box, this.box_stroke_width);
+            x_box = ciel(flor(x_box, 2), this.canvas_width - box_width);
+            y_box = flor(y_box, 2);
 
             this.tooltip.attr('width', box_width)
                         .attr('height', box_height)
                         .attr('x', x_box)
                         .attr('y', y_box);
-            this.text.attr('x', x_box + text_w + padding + this.box_stroke_width)
-                        .attr('y', y_box + text_h + padding - this.box_stroke_width);
+            this.text.attr('x', x_box + padding + text_w + 3)
+                        .attr('y', y_box + padding + text_h - 3);
         }
     };
 
