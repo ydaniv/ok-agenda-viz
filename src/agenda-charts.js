@@ -32,8 +32,8 @@ define(['../lib/d3.v2', 'agenda-tooltips'], function (disregard, Tooltip) {
         this.height = options.height || parent_node.offsetHeight;
         this.width = options.width || parent_node.offsetWidth;
         this.padding = options.padding || {
-            x   : 10,
-            y   : 10
+            x   : 15,
+            y   : 15
         };
         this.domains = options.domains;
         this.ranges = options.ranges;
@@ -120,13 +120,30 @@ define(['../lib/d3.v2', 'agenda-tooltips'], function (disregard, Tooltip) {
                 if ( ! this.color_grad ) {
                     this.color_grad = this.svg.select('defs').append('linearGradient')
                                                                 .attr('id', 'color-axis');
-                    this.color_axis = this.svg.append('rect')
+                    this.color_axis = this.svg.append('g');
+                    this.color_axis.append('rect')
                         .attr('x', this.padding.x)
                         .attr('y', this.height - this.padding.y)
                         .attr('height', '2px')
                         .attr('width', this.width - (2 * this.padding.x))
                         .attr('stroke-width', '0px')
                         .attr('fill', 'url(#color-axis)');
+                    // add '-' image
+                    this.color_axis.append('image')
+                                    // image is 10x10 + 1px margin
+                                    .attr('x', this.padding.x - 11)
+                                    .attr('y', this.height - this.padding.y - 4)
+                                    .attr('width', 10)
+                                    .attr('height', 10)
+                                    .attr('xlink:href', '/src/img/icons/i_minus.png');
+                    // add '+' image
+                    this.color_axis.append('image')
+                                    // image is 10x10 + 1px margin
+                                    .attr('x', this.width - this.padding.x + 1)
+                                    .attr('y', this.height - this.padding.y - 4)
+                                    .attr('width', 10)
+                                    .attr('height', 10)
+                                    .attr('xlink:href', '/src/img/icons/i_plus.png');
                 }
                 this.color_grad.selectAll('stop').remove();
                 this.color_grad.append('stop').attr('stop-color', this.color_scale(this.x_in_min)).attr('offset', '0%');
