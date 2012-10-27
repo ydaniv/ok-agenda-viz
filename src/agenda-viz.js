@@ -51,6 +51,7 @@ define(['agenda-charts', '../lib/reqwest', '../lib/when'], function (Charts, Req
         window_height = document.body ? document.body.clientHeight : window.innerHeight,
         window_width = document.body ? document.body.clientWidth : window.innerWidth;
 
+    d3.select('#loader-message').text('טוען נתונים...');
     // when.js also wraps the resolved and rejected calls in `try-catch` statements
     When.all(
         [Parties.get('http://oknesset.org/api/v2/party/?callback=?'),
