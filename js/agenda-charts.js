@@ -268,7 +268,7 @@ define(['lib/d3.v2', 'agenda-tooltips'], function (disregard, Tooltip) {
                 .attr('stroke', function(d) {
                     return chart.color_scale(d[0]);
                 })
-                .attr('stroke-width', '2px');
+                .attr('stroke-width', '4px');
             this.tooltip = Tooltip(this.svg);
             this.addEvents();
             return this;
@@ -315,7 +315,7 @@ define(['lib/d3.v2', 'agenda-tooltips'], function (disregard, Tooltip) {
             var content = data[3],
                 x = element.attr('cx'),
                 y = element.attr('cy') - element.attr('r');
-            return this.tooltip.showTooltip(content, x | 0, y | 0);
+            return this.tooltip.showTooltip(content, this.color_scale(data[0]), x | 0, y | 0);
         },
         hideDetails : function() {
             return this.tooltip.hideTooltip();
@@ -351,13 +351,14 @@ define(['lib/d3.v2', 'agenda-tooltips'], function (disregard, Tooltip) {
             //# Array.prototype.map
             this.data = data.map(function(member) {
                 return [
-                    member.score,   //0
-                    member.volume,  //1
-                    member.rank,    //2
-                    member.name,    //3
-                    member.party,   //4
-                    member.party_id,//5
-                    member.id       //6
+                    member.score,       //0
+                    member.volume,      //1
+                    member.rank,        //2
+                    member.name,        //3
+                    member.party,       //4
+                    member.party_id,    //5
+                    member.img_url,     //6
+                    member.absolute_url //7
                 ];
             }).sort(function (a, b) {
                     // sort from the higher to the lower ones, to make sure they don't cover each other entirely
@@ -415,7 +416,8 @@ define(['lib/d3.v2', 'agenda-tooltips'], function (disregard, Tooltip) {
             })
                 .attr('fill', function(d) {
                     return chart.color_scale(d[0]);
-                });
+                })
+                .attr('fill-opacity', .8);
             if ( complete ) {
                 this.parties_toggle[0] = true;
                 this.select();
@@ -580,7 +582,7 @@ define(['lib/d3.v2', 'agenda-tooltips'], function (disregard, Tooltip) {
             var content = data[3],
                 x = element.attr('x'),
                 y = element.attr('y');
-            return this.tooltip.showTooltip(content, x | 0, y | 0);
+            return this.tooltip.showTooltip(content, this.color_scale(data[0]), x | 0, y | 0, data[6]);
         },
         hideDetails : function() {
             return this.tooltip.hideTooltip();

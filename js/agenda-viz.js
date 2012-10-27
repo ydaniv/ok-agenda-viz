@@ -55,6 +55,7 @@ define(['agenda-charts', 'lib/reqwest', 'lib/when'], function (Charts, Reqwest, 
         },
         Parties = Object.create(Model),
         Agenda = Object.create(Model),
+        Members = Object.create(Model),
         embed_overlay = d3.select('#embed-overlay'),
         share_overlay = d3.select('#share-overlay'),
         embed_ovelay_on = false,
@@ -64,10 +65,12 @@ define(['agenda-charts', 'lib/reqwest', 'lib/when'], function (Charts, Reqwest, 
     // when.js also wraps the resolved and rejected calls in `try-catch` statements
     When.all(
         [Parties.get('http://oknesset.org/api/v2/party/?callback=?'),
-            Agenda.get('http://oknesset.org/api/v2/agenda/' + agenda_id + '/?callback=?')],
+            Agenda.get('http://oknesset.org/api/v2/agenda/' + agenda_id + '/?callback=?'),
+            Members.get('http://oknesset.org/api/v2/member/?callback=?')],
         function (responses) {
             var parties = responses[0],
                 agenda = responses[1],
+                members = responses[2],
                 parties_menu = d3.select('#parties-menu'),
                 toggle_zoom = d3.select('#toggle-zoom'),
             //# Array.prototype.map
@@ -79,9 +82,10 @@ define(['agenda-charts', 'lib/reqwest', 'lib/when'], function (Charts, Reqwest, 
             //# Array.prototype.forEach
                 members_data = (agenda.parties.forEach(function (party) {
                     //# Array.prototype.forEach
-                    agenda.members.forEach(function (member) {
+                    agenda.members.forEach(function (member, i) {
                         if ( party.name === member.party ) {
                             member.party_id = party.id;
+                            member.img_url = members.objects[i].img_url;
                         }
                     });
                 }), agenda.members),
@@ -93,7 +97,7 @@ define(['agenda-charts', 'lib/reqwest', 'lib/when'], function (Charts, Reqwest, 
                     mouseover   : function (party) {
                         var party_id = party[4];
                         members_chart.show(party_id);
-                        d3.select(this).transition().delay(200).duration(200).attr('fill-opacity', .9);
+                        d3.select(this).transition().delay(200).duration(200).attr('fill-opacity', .4);
                     },
                     mouseout    : function (party) {
                         members_chart.hide(party[4]);
@@ -108,7 +112,7 @@ define(['agenda-charts', 'lib/reqwest', 'lib/when'], function (Charts, Reqwest, 
                         }
                         else {
                             parties_chart.selection.all.attr('fill-opacity', function (d) {
-                                return d[4] != party_id ? 0 : .9;
+                                return d[4] != party_id ? 0 : .4;
                             });
                             members_chart.single(party_id, true);
                         }
@@ -119,7 +123,19 @@ define(['agenda-charts', 'lib/reqwest', 'lib/when'], function (Charts, Reqwest, 
                 members_chart = new Charts.MembersChart({
                     data        : members_data,
                     container   : '#charts',
-                    id          : 'members-canvas'
+                    id          : 'members-canvas',
+                    click       : function (member, i) {
+                        window.open(BASE_URL + member[7]);
+                    },
+                    touchstart  : function (member, i) {
+                        if ( members_chart.focused_member === i ) {
+                            window.open(BASE_URL + member[7]);
+                        }
+                        else {
+                            members_chart.focused_member = i;
+                            members_chart.showDetails(member, d3.select(this));
+                        }
+                    }
                 }).render(),
                 parties_view = true;
 
