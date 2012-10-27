@@ -2,6 +2,18 @@ define(['agenda-charts', 'lib/reqwest', 'lib/when'], function (Charts, Reqwest, 
 
     var d3 = window.d3,
         BASE_URL = 'http://oknesset.org',
+        agenda_id = (function () {
+            var match = window.location.search.match(/agenda_id=(\d+)/i);
+            return (match && match[1]) || 2;
+        }()),
+    // `document.body` in IE8
+        window_height = document.body ? document.body.clientHeight : window.innerHeight,
+        window_width = document.body ? document.body.clientWidth : window.innerWidth,
+        EMBED_SNIPPET = '<iframe width="' +
+            window_width +
+            '" height="' +
+            window_height +
+            '" src="' + window.location.href + '"></iframe>',
         Model = {
             get : function (url) {
                 var deferred = When.defer(),
@@ -43,13 +55,16 @@ define(['agenda-charts', 'lib/reqwest', 'lib/when'], function (Charts, Reqwest, 
         },
         Parties = Object.create(Model),
         Agenda = Object.create(Model),
-    // `document.body` in IE8
-        window_height = document.body ? document.body.clientHeight : window.innerHeight,
-        window_width = document.body ? document.body.clientWidth : window.innerWidth;
+        embed_overlay = d3.select('#embed-overlay'),
+        share_overlay = d3.select('#share-overlay'),
+        embed_ovelay_on = false,
+        share_ovelay_on = false;
 
+    d3.select('#loader-message').text('טוען נתונים...');
+    // when.js also wraps the resolved and rejected calls in `try-catch` statements
     When.all(
         [Parties.get('http://oknesset.org/api/v2/party/?callback=?'),
-            Agenda.get('http://oknesset.org/api/v2/agenda/' + 26 + '/?callback=?')],
+            Agenda.get('http://oknesset.org/api/v2/agenda/' + agenda_id + '/?callback=?')],
         function (responses) {
             var parties = responses[0],
                 agenda = responses[1],
@@ -73,7 +88,8 @@ define(['agenda-charts', 'lib/reqwest', 'lib/when'], function (Charts, Reqwest, 
                 dispatcher = d3.dispatch('change_party'),
                 parties_chart = new Charts.PartiesChart({
                     data        : parties_data,
-                    container   : '#parties-chart',
+                    container   : '#charts',
+                    id          : 'parties-canvas',
                     mouseover   : function (party) {
                         var party_id = party[4];
                         members_chart.show(party_id);
@@ -102,7 +118,8 @@ define(['agenda-charts', 'lib/reqwest', 'lib/when'], function (Charts, Reqwest, 
 
                 members_chart = new Charts.MembersChart({
                     data        : members_data,
-                    container   : '#members-chart'
+                    container   : '#charts',
+                    id          : 'members-canvas'
                 }).render(),
                 parties_view = true;
 
@@ -132,6 +149,8 @@ define(['agenda-charts', 'lib/reqwest', 'lib/when'], function (Charts, Reqwest, 
                 parties_view = is_all;
                 // toggle all parties
                 parties_chart.selection.all.call(parties_chart.transition, parties_chart, !is_all);
+                // toggle the transparency of the parties chart to events, to enable those on the members chart that's underneath it
+                parties_chart.svg.classed('no-events', !is_all);
             });
             // IE can't set innerHTML of select, need to use the .options.add interface
             if ( typeof parties_menu[0][0].options.add == 'function' ) {
@@ -182,6 +201,27 @@ define(['agenda-charts', 'lib/reqwest', 'lib/when'], function (Charts, Reqwest, 
                 .attr('href', BASE_URL + agenda.absolute_url);
             d3.select('#number-of-votes').text(agenda.votes.length);
             d3.select('#loader').transition().delay(200).duration(400).style('top', '100%').style('opacity', 0);
+            d3.select('#embed-snippet').property('value', EMBED_SNIPPET).on('click', function () { this.select(); });
+            d3.select('#share-snippet').property('value', BASE_URL + agenda.absolute_url).on('click', function () { this.select(); });
+
+            var embedHandler = function () {
+                var h = embed_ovelay_on ? '0%' : '100%';
+                if ( share_ovelay_on ) {
+                    shareHandler();
+                }
+                embed_ovelay_on = !embed_ovelay_on;
+                embed_overlay.transition().duration(300).style('height', h);
+            };
+            var shareHandler = function () {
+                var h = share_ovelay_on ? '0%' : '100%';
+                if ( embed_ovelay_on ) {
+                    embedHandler();
+                }
+                share_ovelay_on = !share_ovelay_on;
+                share_overlay.transition().duration(300).style('height', h);
+            };
+            d3.select('#embed-link').on('click', embedHandler);
+            d3.select('#share-link').on('click', shareHandler);
         }
     );
 });

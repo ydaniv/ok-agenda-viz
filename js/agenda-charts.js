@@ -1,4 +1,4 @@
-define(['lib/d3.v2', 'agenda-tooltips'], function () {
+define(['lib/d3.v2', 'agenda-tooltips'], function (disregard, Tooltip) {
 
     // some utilities
     function prop (p) {
@@ -32,17 +32,17 @@ define(['lib/d3.v2', 'agenda-tooltips'], function () {
         this.height = options.height || parent_node.offsetHeight;
         this.width = options.width || parent_node.offsetWidth;
         this.padding = options.padding || {
-            x   : 10,
-            y   : 10
+            x   : 15,
+            y   : 15
         };
         this.domains = options.domains;
         this.ranges = options.ranges;
         this.mouseover = function(d,i) {
-            that.showDetails(d, i);
+            that.showDetails(d, d3.select(this));
             options.mouseover && options.mouseover.call(this, d, i);
         };
         this.mouseout = function(d, i) {
-            that.hideDetails(d, i);
+            that.hideDetails();
             options.mouseout && options.mouseout.call(this, d, i);
         };
         this.click = options.click;
@@ -51,6 +51,9 @@ define(['lib/d3.v2', 'agenda-tooltips'], function () {
         // set canvas width and height
         this.svg.attr('width', this.width)
             .attr('height', this.height);
+        if ( options.id ) {
+            this.svg.attr('id', options.id);
+        }
     }
 
     Chart.prototype = {
@@ -117,16 +120,38 @@ define(['lib/d3.v2', 'agenda-tooltips'], function () {
                 if ( ! this.color_grad ) {
                     this.color_grad = this.svg.select('defs').append('linearGradient')
                         .attr('id', 'color-axis');
-                    this.color_axis = this.svg.append('rect')
+                    this.color_axis = this.svg.append('g');
+                    this.color_axis.append('rect')
                         .attr('x', this.padding.x)
                         .attr('y', this.height - this.padding.y)
                         .attr('height', '2px')
                         .attr('width', this.width - (2 * this.padding.x))
                         .attr('stroke-width', '0px')
                         .attr('fill', 'url(#color-axis)');
+                    // add '-' image
+                    this.color_axis.append('image')
+                        // image is 10x10 + 1px margin
+                        .attr('x', this.padding.x - 11)
+                        .attr('y', this.height - this.padding.y - 4)
+                        .attr('width', 10)
+                        .attr('height', 10)
+                        .attr('xlink:href', '/src/img/icons/i_minus.png');
+                    // add '+' image
+                    this.color_axis.append('image')
+                        // image is 10x10 + 1px margin
+                        .attr('x', this.width - this.padding.x + 1)
+                        .attr('y', this.height - this.padding.y - 4)
+                        .attr('width', 10)
+                        .attr('height', 10)
+                        .attr('xlink:href', '/src/img/icons/i_plus.png');
                 }
                 this.color_grad.selectAll('stop').remove();
                 this.color_grad.append('stop').attr('stop-color', this.color_scale(this.x_in_min)).attr('offset', '0%');
+                // if the X Domain's min and max are around the middle (0) 
+                if ( this.x_in_min < this.x_in_med && this.x_in_med < this.x_in_max ) {
+                    // then add a middle color stop (to gray)
+                    this.color_grad.append('stop').attr('stop-color', this.color_scale(this.x_in_med)).attr('offset', ((((this.x_in_med - this.x_in_min)/(this.x_in_max - this.x_in_min)) * 100) | 0) + '%');
+                }
                 this.color_grad.append('stop').attr('stop-color', this.color_scale(this.x_in_max)).attr('offset', '100%');
             }
             return this;
@@ -147,20 +172,10 @@ define(['lib/d3.v2', 'agenda-tooltips'], function () {
                 this.svg.data(this.data).selectAll(this.selector);
             }
             return this;
-        },
-        showDetails: function(data, i, element) {
-//            d3.select(element).attr("stroke", "black");
-            var content = data[3];
-            return this.tooltip.showTooltip(content, d3.event);
-        },
-        hideDetails: function(data, i, element) {
-            return this.tooltip.hideTooltip();
         }
     };
 
     function PartiesChart (options) {
-        this.tooltip = Tooltip("parties_tooltip");
-
         Chart.call(this, options);
         this.element = 'circle';
         this.selector = '.party';
@@ -195,8 +210,7 @@ define(['lib/d3.v2', 'agenda-tooltips'], function () {
             this.x_out_min = defined(x_min, this.padding.x);
             this.x_out_max = defined(x_max, this.width - this.padding.x);
             this.y_out_min = defined(y_min, this.height - this.padding.y - this.r_in_max * 2);
-            //TODO: just placing them in the middle for now until we have proper volume - then change range's max
-            this.y_out_max = defined(y_max, this.height / 2);
+            this.y_out_max = defined(y_max, this.padding.y + this.r_in_max * 2);
             this.r_out_min = defined(r_min, this.r_in_min * 2);
             this.r_out_max = defined(r_max, this.r_in_max * 2);
             return this;
@@ -255,6 +269,7 @@ define(['lib/d3.v2', 'agenda-tooltips'], function () {
                     return chart.color_scale(d[0]);
                 })
                 .attr('stroke-width', '2px');
+            this.tooltip = Tooltip(this.svg);
             this.addEvents();
             return this;
         },
@@ -295,6 +310,15 @@ define(['lib/d3.v2', 'agenda-tooltips'], function () {
                     return chart.x_scale(d[0]);
                 });
             return this;
+        },
+        showDetails : function(data, element) {
+            var content = data[3],
+                x = element.attr('cx'),
+                y = element.attr('cy') - element.attr('r');
+            return this.tooltip.showTooltip(content, x | 0, y | 0);
+        },
+        hideDetails : function() {
+            return this.tooltip.hideTooltip();
         }
     });
 
@@ -308,7 +332,6 @@ define(['lib/d3.v2', 'agenda-tooltips'], function () {
         this.selector = '.member';
         this.parties_toggle = {};
         this.zoom_in = false;
-        this.tooltip = Tooltip("members_tooltip");
         this.dispatcher = d3.dispatch('start', 'end');
         this.dispatcher.on('start', function (type) {
             if ( type === 'zoom' )
@@ -390,15 +413,14 @@ define(['lib/d3.v2', 'agenda-tooltips'], function () {
                 .attr('height', ! complete ? 0 : function(d) {
                 return chart.height - chart.padding.y - chart.y_scale(d[1]);
             })
-//                .attr('fill-opacity', .7)
                 .attr('fill', function(d) {
                     return chart.color_scale(d[0]);
                 });
-//                .attr('stroke', '#222222');
             if ( complete ) {
                 this.parties_toggle[0] = true;
                 this.select();
             }
+            this.tooltip = Tooltip(this.svg);
             this.addEvents();
             return this;
         },
@@ -500,7 +522,6 @@ define(['lib/d3.v2', 'agenda-tooltips'], function () {
             return chart;
         },
         zoom        : function (is_in, immediate) {
-            //TODO: add transition to scale change
             var chart = this,
                 getScore = prop(0),
                 counter = 1,
@@ -554,6 +575,15 @@ define(['lib/d3.v2', 'agenda-tooltips'], function () {
                     });
             }
             return this;
+        },
+        showDetails : function(data, element) {
+            var content = data[3],
+                x = element.attr('x'),
+                y = element.attr('y');
+            return this.tooltip.showTooltip(content, x | 0, y | 0);
+        },
+        hideDetails : function() {
+            return this.tooltip.hideTooltip();
         }
     });
 
