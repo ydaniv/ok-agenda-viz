@@ -6,6 +6,14 @@ define(['agenda-charts', '../lib/reqwest', '../lib/when'], function (Charts, Req
             var match = window.location.search.match(/agenda_id=(\d+)/i);
             return (match && match[1]) || 2;
         }()),
+        // `document.body` in IE8
+        window_height = document.body ? document.body.clientHeight : window.innerHeight,
+        window_width = document.body ? document.body.clientWidth : window.innerWidth,
+        EMBED_SNIPPET = '<iframe width="' +
+                        window_width +
+                        '" height="' +
+                        window_height +
+                        '" src="' + window.location.href + '"></iframe>',
         Model = {
             get : function (url) {
                 var deferred = When.defer(),
@@ -47,9 +55,10 @@ define(['agenda-charts', '../lib/reqwest', '../lib/when'], function (Charts, Req
         },
         Parties = Object.create(Model),
         Agenda = Object.create(Model),
-        // `document.body` in IE8
-        window_height = document.body ? document.body.clientHeight : window.innerHeight,
-        window_width = document.body ? document.body.clientWidth : window.innerWidth;
+        embed_overlay = d3.select('#embed-overlay'),
+        share_overlay = d3.select('#share-overlay'),
+        embed_ovelay_on = false,
+        share_ovelay_on = false;
 
     d3.select('#loader-message').text('טוען נתונים...');
     // when.js also wraps the resolved and rejected calls in `try-catch` statements
@@ -192,6 +201,27 @@ define(['agenda-charts', '../lib/reqwest', '../lib/when'], function (Charts, Req
                                                .attr('href', BASE_URL + agenda.absolute_url);
             d3.select('#number-of-votes').text(agenda.votes.length);
             d3.select('#loader').transition().delay(200).duration(400).style('top', '100%').style('opacity', 0);
+            d3.select('#embed-snippet').property('value', EMBED_SNIPPET).on('click', function () { this.select(); });
+            d3.select('#share-snippet').property('value', BASE_URL + agenda.absolute_url).on('click', function () { this.select(); });
+
+            var embedHandler = function () {
+                var h = embed_ovelay_on ? '0%' : '100%';
+                if ( share_ovelay_on ) {
+                    shareHandler();
+                }
+                embed_ovelay_on = !embed_ovelay_on;
+                embed_overlay.transition().duration(300).style('height', h);
+            };
+            var shareHandler = function () {
+                var h = share_ovelay_on ? '0%' : '100%';
+                if ( embed_ovelay_on ) {
+                    embedHandler();
+                }
+                share_ovelay_on = !share_ovelay_on;
+                share_overlay.transition().duration(300).style('height', h);
+            };
+            d3.select('#embed-link').on('click', embedHandler);
+            d3.select('#share-link').on('click', shareHandler);
         }
     );
 });
