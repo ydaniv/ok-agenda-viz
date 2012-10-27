@@ -415,7 +415,8 @@ define(['../lib/d3.v2', 'agenda-tooltips'], function (disregard, Tooltip) {
                 })
                 .attr('fill', function(d) {
                     return chart.color_scale(d[0]);
-                });
+                })
+                .attr('fill-opacity', .8);
             if ( complete ) {
                 this.parties_toggle[0] = true;
                 this.select();
