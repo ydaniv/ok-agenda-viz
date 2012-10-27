@@ -135,7 +135,7 @@ define(['lib/d3.v2', 'agenda-tooltips'], function (disregard, Tooltip) {
                         .attr('y', this.height - this.padding.y - 4)
                         .attr('width', 10)
                         .attr('height', 10)
-                        .attr('xlink:href', '/src/img/icons/i_minus.png');
+                        .attr('xlink:href', 'img/icons/i_minus.png');
                     // add '+' image
                     this.color_axis.append('image')
                         // image is 10x10 + 1px margin
@@ -143,7 +143,7 @@ define(['lib/d3.v2', 'agenda-tooltips'], function (disregard, Tooltip) {
                         .attr('y', this.height - this.padding.y - 4)
                         .attr('width', 10)
                         .attr('height', 10)
-                        .attr('xlink:href', '/src/img/icons/i_plus.png');
+                        .attr('xlink:href', 'img/icons/i_plus.png');
                 }
                 this.color_grad.selectAll('stop').remove();
                 this.color_grad.append('stop').attr('stop-color', this.color_scale(this.x_in_min)).attr('offset', '0%');
