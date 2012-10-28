@@ -91,6 +91,15 @@
             clear: both;
             padding: 5px 0;
         }
+        #controls select {
+            -webkit-appearance: none;
+               -moz-appearance: none;
+                -ms-appearance: none;
+                 -o-appearance: none;
+            background-image: url('/src/img/icons/i_drop.png');
+            background-position: 7px 60%;
+            background-repeat: no-repeat;
+        }
         #controls select, #controls button {
             background-color: transparent;
             border: 1px solid #355c7f;
@@ -232,6 +241,31 @@
         </div>
         <div id="loader"><span id="loader-message">טוען קבצים...</span></div>
     </div>
+    <!--[if lte IE 8]>
+    <script>
+        var IE8_COMPAT_MODE = true;
+        var require = {
+            deps    : ['lib/ie8/compat', 'lib/ie8/sizzle'],
+            paths   : {
+                'd3.v2' : '../lib/ie8/r2d3',
+                reqwest : '../lib/reqwest',
+                when    : '../lib/when'
+            }
+        };
+    </script>
+    <![endif]-->
+    <!--[if IE 9]><!-->
+    <script>
+        var IE8_COMPAT_MODE = false;
+        var require = {
+            paths   : {
+                'd3.v2' : '../lib/d3.v2',
+                reqwest : '../lib/reqwest',
+                when    : '../lib/when'
+            }
+        };
+    </script>
+    <!--<![endif]-->
     <script data-main="src/agenda-viz.js" src="lib/require.js"></script>
 </body>
 </html>

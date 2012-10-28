@@ -10,17 +10,32 @@ define(function () {
     function Tooltip (svg) {
         if ( ! (this instanceof Tooltip) ) return new Tooltip(svg);
 
-        this.container = svg.append('g').style('pointer-events', 'none');
-        this.tooltip = this.container.append('rect')
+        var container;
+
+        if ( IE8_COMPAT_MODE ) {
+            container = svg;
+            this.hideTooltip = function () {
+                this.container.select('.ie8tt').style('visibility', 'hidden');
+            };
+        } else {
+            container = svg.append('g').style('pointer-events', 'none');
+        }
+        this.container = container;
+        this.tooltip = container.append('rect')
                             .attr('width', '40')
                             .attr('height', '40')
                             .attr('ry', '10')
                             .attr('rx', '10')
                             .attr('class', 'tooltip');
-        this.text = this.container.append('text')
+        this.text = container.append('text')
                                 .attr('font-family', 'sans-serif')
                                 .attr('fill', '#fff')
                                 .attr('font-size', FONT_SIZE);
+        // make up for the lack of a group and disale events on text and tooltip
+        if ( IE8_COMPAT_MODE ) {
+            this.tooltip.classed('no-events ie8tt', true);
+            this.text.classed('no-events ie8tt', true);
+        }
         this.canvas_width = svg.attr('width');
         this.hideTooltip();
     }
@@ -39,12 +54,19 @@ define(function () {
                                             .attr('width', 45)
                                             .attr('height', 60)
                                             .attr('xlink:href', image);
+                if ( IE8_COMPAT_MODE ) {
+                    this.image.classed('no-events ie8tt', true);
+                }
             }
             this.updatePosition(x, y);
-            this.container.style("visibility", "visible");
+            if ( IE8_COMPAT_MODE ) {
+                this.container.select('.ie8tt').style('visibility', 'visible');
+            } else {
+                this.container.style('visibility', 'visible');
+            }
         },
         hideTooltip     : function () {
-            this.container.style("visibility", "hidden");
+            this.container.style('visibility', 'hidden');
         },
         updatePosition  : function (x, y) {
             var padding = 10,
