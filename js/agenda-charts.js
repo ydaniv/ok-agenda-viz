@@ -1,5 +1,11 @@
-define(['lib/d3.v2', 'agenda-tooltips'], function (disregard, Tooltip) {
-
+define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
+    if (!Object.create) {
+        Object.create = function (proto, props) {
+            function F () {}
+            F.prototype = proto;
+            return new F();
+        }
+    }
     // some utilities
     function prop (p) {
         return function (obj) {
@@ -112,6 +118,7 @@ define(['lib/d3.v2', 'agenda-tooltips'], function (disregard, Tooltip) {
             return this;
         },
         createAxes      : function () {
+            var color_axis;
             if ( ! this.no_axes ) {
                 // create X axis
 //                this.x_axis = d3.svg.axis();
@@ -120,8 +127,13 @@ define(['lib/d3.v2', 'agenda-tooltips'], function (disregard, Tooltip) {
                 if ( ! this.color_grad ) {
                     this.color_grad = this.svg.select('defs').append('linearGradient')
                         .attr('id', 'color-axis');
-                    this.color_axis = this.svg.append('g');
-                    this.color_axis.append('rect')
+                    if ( IE8_COMPAT_MODE ) {
+                        color_axis = this.svg;
+                    } else {
+                        color_axis = this.svg.append('g');
+                    }
+
+                    color_axis.append('rect')
                         .attr('x', this.padding.x)
                         .attr('y', this.height - this.padding.y)
                         .attr('height', '2px')
@@ -129,7 +141,7 @@ define(['lib/d3.v2', 'agenda-tooltips'], function (disregard, Tooltip) {
                         .attr('stroke-width', '0px')
                         .attr('fill', 'url(#color-axis)');
                     // add '-' image
-                    this.color_axis.append('image')
+                    color_axis.append('image')
                         // image is 10x10 + 1px margin
                         .attr('x', this.padding.x - 11)
                         .attr('y', this.height - this.padding.y - 4)
@@ -137,7 +149,7 @@ define(['lib/d3.v2', 'agenda-tooltips'], function (disregard, Tooltip) {
                         .attr('height', 10)
                         .attr('xlink:href', 'img/icons/i_minus.png');
                     // add '+' image
-                    this.color_axis.append('image')
+                    color_axis.append('image')
                         // image is 10x10 + 1px margin
                         .attr('x', this.width - this.padding.x + 1)
                         .attr('y', this.height - this.padding.y - 4)

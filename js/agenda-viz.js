@@ -1,5 +1,12 @@
-define(['agenda-charts', 'lib/reqwest', 'lib/when'], function (Charts, Reqwest, When) {
+define(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When) {
 
+    if (!Object.create) {
+        Object.create = function (proto, props) {
+            function F () {}
+            F.prototype = proto;
+            return new F();
+        }
+    }
     var d3 = window.d3,
         BASE_URL = 'http://oknesset.org',
         agenda_id = (function () {

@@ -1,5 +1,5 @@
-define(['lib/d3.v2'], function () {
-    var d3 = window.d3,
+define(function () {
+    var FONT_SIZE = 16,
         flor = function (val, _flor) {
             return val < _flor ? _flor : val;
         },
@@ -10,17 +10,32 @@ define(['lib/d3.v2'], function () {
     function Tooltip (svg) {
         if ( ! (this instanceof Tooltip) ) return new Tooltip(svg);
 
-        this.container = svg.append('g').style('pointer-events', 'none');
-        this.tooltip = this.container.append('rect')
+        var container;
+
+        if ( IE8_COMPAT_MODE ) {
+            container = svg;
+            this.hideTooltip = function () {
+                this.container.select('.ie8tt').style('visibility', 'hidden');
+            };
+        } else {
+            container = svg.append('g').style('pointer-events', 'none');
+        }
+        this.container = container;
+        this.tooltip = container.append('rect')
             .attr('width', '40')
             .attr('height', '40')
             .attr('ry', '10')
             .attr('rx', '10')
             .attr('class', 'tooltip');
-        this.text = this.container.append('text')
+        this.text = container.append('text')
             .attr('font-family', 'sans-serif')
             .attr('fill', '#fff')
-            .attr('font-size', 16);
+            .attr('font-size', FONT_SIZE);
+        // make up for the lack of a group and disale events on text and tooltip
+        if ( IE8_COMPAT_MODE ) {
+            this.tooltip.classed('no-events ie8tt', true);
+            this.text.classed('no-events ie8tt', true);
+        }
         this.canvas_width = svg.attr('width');
         this.hideTooltip();
     }
@@ -28,6 +43,7 @@ define(['lib/d3.v2'], function () {
     Tooltip.prototype = {
         constructor     : Tooltip,
         showTooltip     : function (content, color, x, y, image) {
+            this.content = content;
             this.text.text(content);
             this.tooltip.attr('fill', color);
             if ( this.image ) {
@@ -38,12 +54,19 @@ define(['lib/d3.v2'], function () {
                     .attr('width', 45)
                     .attr('height', 60)
                     .attr('xlink:href', image);
+                if ( IE8_COMPAT_MODE ) {
+                    this.image.classed('no-events ie8tt', true);
+                }
             }
             this.updatePosition(x, y);
-            this.container.style("visibility", "visible");
+            if ( IE8_COMPAT_MODE ) {
+                this.container.select('.ie8tt').style('visibility', 'visible');
+            } else {
+                this.container.style('visibility', 'visible');
+            }
         },
         hideTooltip     : function () {
-            this.container.style("visibility", "hidden");
+            this.container.style('visibility', 'hidden');
         },
         updatePosition  : function (x, y) {
             var padding = 10,
@@ -51,13 +74,22 @@ define(['lib/d3.v2'], function () {
                 image_margin = 50,
                 text_w = +this.text.style('width').slice(0, -2) | 0,
                 text_h = +this.text.style('height').slice(0, -2) | 0,
-                box_width = text_w + 2*padding,
-                box_height = text_h + 2*padding,
-                x_box = x - box_width/2,
-                y_box = y - box_height - margin;
+                box_height, box_width, x_box, y_box, no_text_dims = false;
+
+            // for some reason IE can't return proper sizes of text element
+            if ( ! text_h ) {
+                text_w = this.content.length * (FONT_SIZE/2 | 0);
+                text_h = FONT_SIZE;
+                no_text_dims = true;
+            }
+
+            box_width = text_w + 2*padding;
+            box_height = text_h + 2*padding;
+            x_box = x - box_width/2;
+            y_box = y - box_height - margin;
 
             x_box = ciel(flor(x_box, 2), this.canvas_width - box_width);
-            y_box = flor(y_box, image_margin + 2);
+            y_box = flor(y_box, (this.image ? image_margin : 0) + 2);
 
             if ( this.image ) {
                 this.image.attr('x', x_box + box_width/2 - 21)
@@ -67,7 +99,8 @@ define(['lib/d3.v2'], function () {
                 .attr('height', box_height)
                 .attr('x', x_box)
                 .attr('y', y_box);
-            this.text.attr('x', x_box + padding + text_w + 3)
+
+            this.text.attr('x', x_box + padding + 3 + (no_text_dims ? 0 : text_w))
                 .attr('y', y_box + padding + text_h - 3);
         }
     };
