@@ -1,5 +1,7 @@
 define(function () {
-    var FONT_SIZE = 16,
+    var FONT_SIZE = 12,
+        IMAGE_WIDTH = 45,
+        IMAGE_HEIGHT = 60,
         flor = function (val, _flor) {
             return val < _flor ? _flor : val;
         },
@@ -51,8 +53,8 @@ define(function () {
             }
             if ( image ) {
                 this.image = this.container.append('image')
-                                            .attr('width', 45)
-                                            .attr('height', 60)
+                                            .attr('width', IMAGE_WIDTH)
+                                            .attr('height', IMAGE_HEIGHT)
                                             .attr('xlink:href', image);
                 if ( IE8_COMPAT_MODE ) {
                     this.image.classed('no-events ie8tt', true);
@@ -92,7 +94,7 @@ define(function () {
             y_box = flor(y_box, (this.image ? image_margin : 0) + 2);
 
             if ( this.image ) {
-                this.image.attr('x', x_box + box_width/2 - 21)
+                this.image.attr('x', x_box + box_width/2 - IMAGE_WIDTH/2)
                             .attr('y', y_box - image_margin);
             }
             this.tooltip.attr('width', box_width)
@@ -100,7 +102,7 @@ define(function () {
                         .attr('x', x_box)
                         .attr('y', y_box);
 
-            this.text.attr('x', x_box + padding + 3 + (no_text_dims ? 0 : text_w))
+            this.text.attr('x', x_box + padding + (no_text_dims ? 0 : text_w))
                         .attr('y', y_box + padding + text_h - 3);
         }
     };
