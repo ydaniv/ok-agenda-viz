@@ -106,7 +106,7 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
             // set the color scale
             this.color_scale = d3.scale.linear()
                 .domain([this.x_in_min, this.x_in_med, this.x_in_max])
-                .range(['red', 'gray', 'green']);
+                .range(['red', 'gray', '#39B54A']);
             return this;
         },
         setScales       : function () {
