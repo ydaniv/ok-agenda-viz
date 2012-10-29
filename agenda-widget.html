@@ -31,6 +31,10 @@
         .hide {
             display: none;
         }
+        .member {
+            fill: none;
+            /*opacity: .8;*/
+        }
         .no-events {
             pointer-events: none;
         }
@@ -87,7 +91,7 @@
             width: 100%;
             height: 100%;
             overflow: hidden;
-            background-color: #add8e6;
+            background-color: #d9eefb;
         }
         #controls {
             clear: both;
@@ -98,9 +102,9 @@
                -moz-appearance: none;
                 -ms-appearance: none;
                  -o-appearance: none;
-            padding-left: 15px;
+            padding: 0 3px 2px 15px;
             background-image: url('/src/img/icons/i_drop.png');
-            background-position: 7px 60%;
+            background-position: 7px 55%;
             background-repeat: no-repeat;
         }
         #controls select, #controls button {
@@ -158,6 +162,9 @@
             font-size: 12px;
             line-height: 100%;
             font-weight: normal;
+        }
+        #toggle-zoom {
+            float: left;
         }
         #header {
             height: 65px;
@@ -230,6 +237,9 @@
             </div>
             <div id="controls">
                 <select id="parties-menu" name="party"></select>
+                <select id="knesset-menu" name="knesset">
+                    <option value="18">הכנסת ה - 18</option>
+                </select>
                 <button id="toggle-zoom" name="zoom">שנה מיקוד</button>
             </div>
         </div>
