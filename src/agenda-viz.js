@@ -13,14 +13,20 @@ define(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When) {
             var match = window.location.search.match(/agenda_id=(\d+)/i);
             return (match && match[1]) || 2;
         }()),
+        OVERRIDE_MEMBERS_CLICK = !!window.location.search.match(/memberjack=1/i),
+        HOSTNAME = (function () {
+            var match = window.location.search.match(/hostname=([^&]*)/i),
+                res = (match && match[1]) || null;
+            return res ? decodeURIComponent(res) : res;
+        }()),
         // `document.body` in IE8
         window_height = document.body ? document.body.clientHeight : window.innerHeight,
         window_width = document.body ? document.body.clientWidth : window.innerWidth,
         EMBED_SNIPPET = '<iframe width="' +
-                        window_width +
-                        '" height="' +
-                        window_height +
-                        '" src="' + window.location.href + '"></iframe>',
+            window_width +
+            '" height="' +
+            window_height +
+            '" src="' + window.location.href + '"></iframe>',
         Model = {
             get : function (url) {
                 var deferred = When.defer(),
@@ -93,6 +99,7 @@ define(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When) {
                         if ( party.name === member.party ) {
                             member.party_id = party.id;
                             member.img_url = members.objects[i].img_url;
+                            member.id = members.objects[i].id;
                         }
                     });
                 }), agenda.members),
@@ -126,17 +133,28 @@ define(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When) {
                     },
                     no_axes     : true
                 }).draw(),
-
+                openMemberHandler = function (member) {
+                    if ( OVERRIDE_MEMBERS_CLICK && HOSTNAME ) {
+                        parent.postMessage(member[8], HOSTNAME);
+                    } else {
+                        window.open(BASE_URL + member[7]);
+                    }
+                },
+                touches = [],
                 members_chart = new Charts.MembersChart({
                     data        : members_data,
                     container   : '#charts',
                     id          : 'members-canvas',
                     click       : function (member, i) {
-                        window.open(BASE_URL + member[7]);
+                        if ( ! touches.length ) {
+                            openMemberHandler(member);
+                        }
                     },
                     touchstart  : function (member, i) {
+                        // just detect that a touch event was triggered to prevent the click handler
+                        var touches = d3.touches(members_chart.svg);
                         if ( members_chart.focused_member === i ) {
-                            window.open(BASE_URL + member[7]);
+                            openMemberHandler(member);
                         }
                         else {
                             members_chart.focused_member = i;
