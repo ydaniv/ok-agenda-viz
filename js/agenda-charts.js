@@ -38,7 +38,7 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
         this.height = options.height || parent_node.offsetHeight;
         this.width = options.width || parent_node.offsetWidth;
         this.padding = options.padding || {
-            x   : 15,
+            x   : 25,
             y   : 15
         };
         this.domains = options.domains;
@@ -147,7 +147,7 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
                         .attr('y', this.height - this.padding.y - 4)
                         .attr('width', 10)
                         .attr('height', 10)
-                        .attr('xlink:href', 'img/icons/i_minus.png');
+                        .attr('xlink:href', '/src/img/icons/i_minus.png');
                     // add '+' image
                     color_axis.append('image')
                         // image is 10x10 + 1px margin
@@ -155,7 +155,7 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
                         .attr('y', this.height - this.padding.y - 4)
                         .attr('width', 10)
                         .attr('height', 10)
-                        .attr('xlink:href', 'img/icons/i_plus.png');
+                        .attr('xlink:href', '/src/img/icons/i_plus.png');
                 }
                 this.color_grad.selectAll('stop').remove();
                 this.color_grad.append('stop').attr('stop-color', this.color_scale(this.x_in_min)).attr('offset', '0%');
@@ -337,10 +337,10 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
     function MembersChart (options) {
         var _self = this;
         Chart.call(this, options);
-        this.bar_width = options.bar_width || 6;
+        this.bar_width = options.bar_width || 8;
         this.bar_padding = options.bar_padding || 1;
         this.stroke = options.stroke || 0;
-        this.element = 'rect';
+        this.element = 'line';
         this.selector = '.member';
         this.parties_toggle = {};
         this.zoom_in = false;
@@ -416,21 +416,22 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
                 // add the member's rectangle
                 .append(this.element)
                 .attr('class', this.selector.slice(1))
-                .attr('x', function(d, i) {
+                .attr('x1', function(d, i) {
                     return chart.x_scale(d[0]);
                 })
-                .attr('y', ! complete ? chart.height - chart.padding.y : function(d) {
+                .attr('x2', function(d, i) {
+                    return chart.x_scale(d[0]);
+                })
+                .attr('y1', ! complete ? chart.height - chart.padding.y : function(d) {
                 return chart.y_scale(d[1]);
             })
-                .attr('width', this.bar_width)
+                .attr('stroke-width', this.bar_width)
+                .attr('stroke-dasharray', '2,1')
                 // if not `complete` then height starts at 0 and then transitioned according to chart height and y_scale
-                .attr('height', ! complete ? 0 : function(d) {
-                return chart.height - chart.padding.y - chart.y_scale(d[1]);
-            })
-                .attr('fill', function(d) {
+                .attr('y2', chart.y_scale(chart.y_in_min))
+                .attr('stroke', function(d) {
                     return chart.color_scale(d[0]);
-                })
-                .attr('fill-opacity', .8);
+                });
             if ( complete ) {
                 this.parties_toggle[0] = true;
                 this.select();
@@ -515,10 +516,7 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
                 .delay(function(d, i) {
                     return i * 10;
                 })
-                .attr('height', transit_out ? 0 : function(d) {
-                return chart.height - chart.padding.y - chart.y_scale(d[1]);
-            })
-                .attr('y', transit_out ? chart.height - chart.padding.y : function(d) {
+                .attr('y1', transit_out ? chart.height - chart.padding.y : function(d) {
                 return chart.y_scale(d[1]);
             })
                 .each('start', function () {
@@ -571,9 +569,21 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
             selection = (immediate ? selection : selection.transition()
                 .delay(800)
                 .duration(400))
-                .attr('x', function(d, i) {
+                .attr('x1', function(d, i) {
                     var x = chart.x_scale(d[0]);
-                    return x === chart.x_out_max ? x - chart.bar_width : x;
+                    return x === chart.x_out_max ?
+                        x - chart.bar_width/2 :
+                        x === chart.x_out_min ?
+                            x + chart.bar_width/2 :
+                            x;
+                })
+                .attr('x2', function(d, i) {
+                    var x = chart.x_scale(d[0]);
+                    return x === chart.x_out_max ?
+                        x - chart.bar_width/2 :
+                        x === chart.x_out_min ?
+                            x + chart.bar_width/2 :
+                            x;
                 });
             if ( ! immediate ) {
                 selection.each('start', function () {
@@ -593,8 +603,8 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
         },
         showDetails : function(data, element) {
             var content = data[3],
-                x = element.attr('x'),
-                y = element.attr('y');
+                x = element.attr('x1'),
+                y = element.attr('y1');
             return this.tooltip.showTooltip(content, this.color_scale(data[0]), x | 0, y | 0, data[6]);
         },
         hideDetails : function() {
