@@ -104,6 +104,7 @@ define(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When) {
                     });
                 }), agenda.members),
                 dispatcher = d3.dispatch('change_party'),
+                parties_touches = 0,
                 parties_chart = new Charts.PartiesChart({
                     data        : parties_data,
                     container   : '#charts',
@@ -117,8 +118,19 @@ define(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When) {
                         members_chart.hide(party[4]);
                         d3.select(this).transition().duration(200).attr('fill-opacity', 0);
                     },
+                    click       : function (party) {
+                        var party_id;
+                        if ( ! parties_touches ) {
+                            party_id = party[4];
+                            // doesn't seem to trigger 'change' event, at least not on chrome
+                            parties_menu.property('value', party_id);
+                            dispatcher.change_party(party_id);
+                        }
+                    },
                     touchstart  : function (party) {
-                        var party_id = party[4];
+                        // just detect that a touch event was triggered to prevent the click handler
+                        var parties_touches = d3.touches(parties_chart.svg.node().parentNode).length,
+                            party_id = party[4];
                         if ( members_chart.parties_toggle[party_id] ) {
                             // doesn't seem to trigger 'change' event, at least not on chrome
                             parties_menu.property('value', party_id);
@@ -140,19 +152,19 @@ define(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When) {
                         window.open(BASE_URL + member[7]);
                     }
                 },
-                touches = [],
+                members_touches = 0,
                 members_chart = new Charts.MembersChart({
                     data        : members_data,
                     container   : '#charts',
                     id          : 'members-canvas',
                     click       : function (member, i) {
-                        if ( ! touches.length ) {
+                        if ( ! members_touches ) {
                             openMemberHandler(member);
                         }
                     },
                     touchstart  : function (member, i) {
                         // just detect that a touch event was triggered to prevent the click handler
-                        var touches = d3.touches(members_chart.svg);
+                        var members_touches = d3.touches(members_chart.svg.node().parentNode).length;
                         if ( members_chart.focused_member === i ) {
                             openMemberHandler(member);
                         }
