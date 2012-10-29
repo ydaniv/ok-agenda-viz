@@ -106,7 +106,7 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
             // set the color scale
             this.color_scale = d3.scale.linear()
                 .domain([this.x_in_min, this.x_in_med, this.x_in_max])
-                .range(['red', 'gray', 'green']);
+                .range(['red', 'gray', '#39B54A']);
             return this;
         },
         setScales       : function () {
@@ -370,7 +370,8 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
                     member.party,       //4
                     member.party_id,    //5
                     member.img_url,     //6
-                    member.absolute_url //7
+                    member.absolute_url,//7
+                    member.id           //8
                 ];
             }).sort(function (a, b) {
                     // sort from the higher to the lower ones, to make sure they don't cover each other entirely
