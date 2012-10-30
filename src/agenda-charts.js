@@ -359,8 +359,8 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
     }
 
     MembersChart.prototype = extend(Object.create(Chart.prototype), {
-        constructor : MembersChart,
-        setData     : function (data) {
+        constructor     : MembersChart,
+        setData         : function (data) {
             //# Array.prototype.map
             this.data = data.map(function(member) {
                 return [
@@ -380,7 +380,7 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
             });
             return this;
         },
-        setRanges   : function (x_min, x_max, y_min, y_max) {
+        setRanges       : function (x_min, x_max, y_min, y_max) {
             // if ranges was set in options
             if ( this.ranges && ! this.ranges_set ) {
                 this.ranges_set = true;
@@ -465,7 +465,7 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
                     })
                     .attr('r', ! complete ? 0 : half_bar_w);
         },
-        render      : function (complete) {
+        render          : function (complete) {
             var chart = this;
 
             this.selection = {
@@ -497,14 +497,14 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
             this.addEvents();
             return this;
         },
-        select      : function (id, dont_set) {
+        select          : function (id, dont_set) {
             var selection = arguments.length ? this.selection.getParty(id) : this.selection.all;
             if ( ! dont_set ) {
                 this.selection.current = selection;
             }
             return selection;
         },
-        toggle      : function (party, show_hide) {
+        toggle          : function (party, show_hide) {
             var id;
             // if party is NOT party_id but a selection
             id = typeof party === 'number' ? party : party.data()[0][5];
@@ -516,7 +516,7 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
             }
             return this;
         },
-        single      : function (party, dont_set) {
+        single          : function (party, dont_set) {
             var id, pid;
             // if party is NOT party_id but a selection
             id = typeof party === 'number' ? party : party.data()[0][5];
@@ -533,7 +533,7 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
             this.toggle(id, dont_set);
             return this;
         },
-        show        : function (party, override_persist, callback) {
+        show            : function (party, override_persist, callback) {
             var id;
             // if party is NOT party_id but a selection
             id = typeof party === 'number' ? party : party.data()[0][5];
@@ -549,7 +549,7 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
             }
             return this;
         },
-        hide        : function (party, override_persist, callback) {
+        hide            : function (party, override_persist, callback) {
             var id;
             // if party is NOT party_id but a selection
             id = typeof party === 'number' ? party : party.data()[0][5];
@@ -565,7 +565,7 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
             }
             return this;
         },
-        transition  : function (selection, chart, transit_out, callback) {
+        transition      : function (selection, chart, transit_out, callback) {
             var count = selection[0].length, counter = 1,
                 transition = selection.transition()
                     .duration(400)
@@ -626,7 +626,7 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
                             });
             }
         },
-        zoom        : function (is_in, immediate) {
+        zoom            : function (is_in, immediate) {
             var chart = this,
                 getScore = prop(0),
                 counter = 1,
@@ -682,13 +682,13 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
             }
             return this;
         },
-        showDetails : function(data, element) {
+        showDetails     : function(data, element) {
             var content = data[3],
                 x = +element.attr('transform').split('(')[1].split(',')[0] + this.bar_width / 2,
                 y = element.select('circle').attr('cy');
             return this.tooltip.showTooltip(content, this.color_scale(data[0]), x | 0, y | 0, data[6]);
         },
-        hideDetails : function() {
+        hideDetails     : function() {
             return this.tooltip.hideTooltip();
         }
     });
