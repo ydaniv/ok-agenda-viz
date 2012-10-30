@@ -79,6 +79,7 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
         setYDomain      : function () {
             // set Y scale min and max
             this.y_in_min = 0;
+            //TODO: change max to agenda.votes.length
             this.y_in_max = d3.max(this.data, prop(1)); // by volume
             return this;
         },
@@ -428,7 +429,16 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
                             return chart.color_scale(d[0]);
                         })
                         .attr('r', ! complete ? 0 : bar_w / 2);
-//            selection.append('rect');
+            // add a transparent rect to catch the events
+            selection.append('rect')
+                        .attr('x', 0)
+                        .attr('y', ! complete ? chart.height - chart.padding.y : function(d) {
+                            return chart.y_scale(d[1]);
+                        })
+                        .attr('width', bar_w)
+                        .attr('height', ! complete ? 0 : function (d) {
+                            return chart.y_scale(d[1]);
+                        });
         },
         render      : function (complete) {
             var chart = this;
@@ -543,6 +553,12 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
                     return chart.y_scale(d[1]);
                 })
                 .each('start', function () {
+                    if ( transit_out ) {
+                        // make the event catching rects disappear
+                        selection.select('rect')
+                                    .attr('y', chart.height - chart.padding.y)
+                                    .attr('height', 0)
+                    }
                     if ( counter == 1 ) {
                         chart.dispatcher.start('toggle');
                     }
@@ -575,6 +591,14 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
                 // make sure the person icon appears
                 selection.select('circle')
                             .attr('r', chart.bar_width / 2);
+                // make the event catching rects appear
+                selection.select('rect')
+                            .attr('y', function (d) {
+                                return chart.y_scale(d[1]);
+                            })
+                            .attr('height', function (d) {
+                                return chart.height - chart.padding.y - chart.y_scale(d[1])
+                            });
             }
         },
         zoom        : function (is_in, immediate) {
@@ -636,7 +660,7 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
         showDetails : function(data, element) {
             var content = data[3],
                 x = +element.attr('transform').split('(')[1].split(',')[0] + this.bar_width / 2,
-                y = element.select('line').attr('y1');
+                y = element.select('line').attr('y1') - this.bar_width ;
             return this.tooltip.showTooltip(content, this.color_scale(data[0]), x | 0, y | 0, data[6]);
         },
         hideDetails : function() {
