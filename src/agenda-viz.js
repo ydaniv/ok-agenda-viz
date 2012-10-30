@@ -22,11 +22,7 @@ define(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When) {
         // `document.body` in IE8
         window_height = document.body ? document.body.clientHeight : window.innerHeight,
         window_width = document.body ? document.body.clientWidth : window.innerWidth,
-        EMBED_SNIPPET = '<iframe width="' +
-            window_width +
-            '" height="' +
-            window_height +
-            '" src="' + window.location.href + '"></iframe>',
+        EMBED_SNIPPET = '<iframe width="600" height="400" src="' + window.location.href + '"></iframe>',
         Model = {
             get : function (url) {
                 var deferred = When.defer(),

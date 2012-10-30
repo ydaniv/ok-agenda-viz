@@ -79,7 +79,6 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
         setYDomain      : function () {
             // set Y scale min and max
             this.y_in_min = 0;
-            //TODO: change max to agenda.votes.length
             this.y_in_max = d3.max(this.data, prop(1)); // by volume
             return this;
         },
@@ -222,8 +221,8 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
             }
             this.x_out_min = defined(x_min, this.padding.x);
             this.x_out_max = defined(x_max, this.width - this.padding.x);
-            this.y_out_min = defined(y_min, this.height - this.padding.y - this.r_in_max * 2);
-            this.y_out_max = defined(y_max, this.padding.y + this.r_in_max * 2);
+            this.y_out_min = defined(y_min, this.height - this.padding.y);
+            this.y_out_max = defined(y_max, this.padding.y);
             this.r_out_min = defined(r_min, this.r_in_min * 2);
             this.r_out_max = defined(r_max, this.r_in_max * 2);
             return this;
