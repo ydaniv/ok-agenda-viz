@@ -343,6 +343,7 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
         this.selector = '.member';
         this.parties_toggle = {};
         this.zoom_in = false;
+        this.member_torso = '0 10,0 1,1 1,1 -1,3 -1,3 1,5 1,5 -1,7 -1,7 1,8 1,8 10';
         this.dispatcher = d3.dispatch('start', 'end');
         this.dispatcher.on('start', function (type) {
             if ( type === 'zoom' )
@@ -392,6 +393,7 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
             return this;
         },
         renderElement   : function (selection, chart, complete) {
+            var bar_w = chart.bar_width;
             selection.attr('class', chart.selector.slice(1))
                     .attr('transform', function(d, i) {
                         return 'translate(' + chart.x_scale(d[0]) + ',0)';
@@ -404,10 +406,18 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
                         })
                          // if not `complete` then height starts at 0 and then transitioned according to chart height and y_scale
                         .attr('y2', chart.y_scale(chart.y_in_min))
-                        .attr('stroke-width', chart.bar_width)
+                        .attr('stroke-width', bar_w)
                         .attr('stroke-dasharray', '2,1')
                         .attr('stroke', function(d) {
                             return chart.color_scale(d[0]);
+                        });
+            // lets start drawing the person
+            selection.append('polygon')
+                        .attr('points', chart.member_torso)
+                        .attr('fill', function(d) {
+                            return chart.color_scale(d[0]);
+                        }).attr('transform', function (d) {
+                            return 'translate(0,' + (complete ? chart.y_scale(d[1]) : chart.height) + ')';
                         });
             selection.append('circle')
                         .attr('cx', 4)
@@ -417,7 +427,7 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
                         .attr('stroke', function(d) {
                             return chart.color_scale(d[0]);
                         })
-                        .attr('r', ! complete ? 0 : chart.bar_width / 2);
+                        .attr('r', ! complete ? 0 : bar_w / 2);
 //            selection.append('rect');
         },
         render      : function (complete) {
@@ -552,6 +562,10 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
                     }
                 });
             // transition the person icon
+            transition.select('polygon')
+                        .attr('transform', function (d) {
+                            return 'translate(0,' + (transit_out ? chart.height : chart.y_scale(d[1])) + ')';
+                        });
             transition.select('circle')
                         .attr('cy', transit_out ? chart.height - chart.padding.y : function(d) {
                             return chart.y_scale(d[1]) - chart.bar_width;
@@ -599,7 +613,9 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
                     .delay(200)
                     .duration(400))
                     .attr('transform', function (d) {
-                        return 'translate(' + chart.x_scale(d[0]) + ',0)'
+                        var x = d[0],
+                            x_out = chart.x_scale(x);
+                        return 'translate(' + (x === chart.x_in_max ? x_out - chart.bar_width : x_out) + ',0)'
                     });
             if ( ! immediate ) {
                 selection.each('start', function () {
