@@ -397,26 +397,27 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
                         return 'translate(' + chart.x_scale(d[0]) + ',0)';
                     })
                 .append('line')
-//                        .attr('x1', function(d, i) {
-//                            return chart.x_scale(d[0]);
-//                        })
-//                        .attr('x2', function(d, i) {
-//                            return chart.x_scale(d[0]);
-//                        })
+                        .attr('x1', 4)
+                        .attr('x2', 4)
                         .attr('y1', ! complete ? chart.height - chart.padding.y : function(d) {
                             return chart.y_scale(d[1]);
                         })
                          // if not `complete` then height starts at 0 and then transitioned according to chart height and y_scale
                         .attr('y2', chart.y_scale(chart.y_in_min))
-                        .attr('x1', 4)
-                        .attr('x2', 4)
-//                        .attr('y1', 0)
-//                        .attr('y2', '100%')
                         .attr('stroke-width', chart.bar_width)
                         .attr('stroke-dasharray', '2,1')
                         .attr('stroke', function(d) {
                             return chart.color_scale(d[0]);
                         });
+            selection.append('circle')
+                        .attr('cx', 4)
+                        .attr('cy', ! complete ? chart.height - chart.padding.y : function(d) {
+                            return chart.y_scale(d[1]);
+                        })
+                        .attr('stroke', function(d) {
+                            return chart.color_scale(d[0]);
+                        })
+                        .attr('r', ! complete ? 0 : chart.bar_width / 2);
 //            selection.append('rect');
         },
         render      : function (complete) {
@@ -520,14 +521,14 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
             return this;
         },
         transition  : function (selection, chart, transit_out, callback) {
-            var count = selection[0].length, counter = 1;
-            // transition the radii of all circles
-            selection.transition()
-                .duration(400)
-                .delay(function(d, i) {
-                    return i * 10;
-                })
-                .select('line')
+            var count = selection[0].length, counter = 1,
+                transition = selection.transition()
+                    .duration(400)
+                    .delay(function(d, i) {
+                        return i * 10;
+                    });
+            // transition the line to stretch up
+            transition.select('line')
                 .attr('y1', transit_out ? chart.height - chart.padding.y : function(d) {
                     return chart.y_scale(d[1]);
                 })
@@ -537,6 +538,12 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
                     }
                 })
                 .each('end', function () {
+                    // if transitioning out
+                    if ( transit_out ) {
+                        // make sure we make the person icon disappear at the end of the transition
+                        selection.select('circle')
+                                    .attr('r', 0);
+                    }
                     if ( counter === count) {
                         chart.dispatcher.end('toggle');
                         callback && callback();
@@ -544,6 +551,17 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
                         counter += 1;
                     }
                 });
+            // transition the person icon
+            transition.select('circle')
+                        .attr('cy', transit_out ? chart.height - chart.padding.y : function(d) {
+                            return chart.y_scale(d[1]) - chart.bar_width;
+                        });
+            // if transitioning in
+            if ( ! transit_out ) {
+                // make sure the person icon appears
+                selection.select('circle')
+                            .attr('r', chart.bar_width / 2);
+            }
         },
         zoom        : function (is_in, immediate) {
             var chart = this,
