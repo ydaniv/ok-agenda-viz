@@ -295,7 +295,6 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
                 .attr('r', transit_out ? 0 : function(d) {
                     return chart.r_scale(d[2]);
                 });
-            return chart;
         },
         zoom        : function (is_in) {
             //TODO: add transition to scale change
@@ -340,7 +339,7 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
         this.bar_width = options.bar_width || 8;
         this.bar_padding = options.bar_padding || 1;
         this.stroke = options.stroke || 0;
-        this.element = 'line';
+        this.element = 'g';
         this.selector = '.member';
         this.parties_toggle = {};
         this.zoom_in = false;
@@ -392,6 +391,34 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
             this.y_out_max = defined(y_max, this.padding.y); 
             return this;
         },
+        renderElement   : function (selection, chart, complete) {
+            selection.attr('class', chart.selector.slice(1))
+                    .attr('transform', function(d, i) {
+                        return 'translate(' + chart.x_scale(d[0]) + ',0)';
+                    })
+                .append('line')
+//                        .attr('x1', function(d, i) {
+//                            return chart.x_scale(d[0]);
+//                        })
+//                        .attr('x2', function(d, i) {
+//                            return chart.x_scale(d[0]);
+//                        })
+                        .attr('y1', ! complete ? chart.height - chart.padding.y : function(d) {
+                            return chart.y_scale(d[1]);
+                        })
+                         // if not `complete` then height starts at 0 and then transitioned according to chart height and y_scale
+                        .attr('y2', chart.y_scale(chart.y_in_min))
+                        .attr('x1', 4)
+                        .attr('x2', 4)
+//                        .attr('y1', 0)
+//                        .attr('y2', '100%')
+                        .attr('stroke-width', chart.bar_width)
+                        .attr('stroke-dasharray', '2,1')
+                        .attr('stroke', function(d) {
+                            return chart.color_scale(d[0]);
+                        });
+//            selection.append('rect');
+        },
         render      : function (complete) {
             var chart = this;
 
@@ -415,23 +442,7 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
                 .enter()
                 // add the member's rectangle
                 .append(this.element)
-                .attr('class', this.selector.slice(1))
-                .attr('x1', function(d, i) {
-                    return chart.x_scale(d[0]);
-                })
-                .attr('x2', function(d, i) {
-                    return chart.x_scale(d[0]);
-                })
-                .attr('y1', ! complete ? chart.height - chart.padding.y : function(d) {
-                    return chart.y_scale(d[1]);
-                })
-                .attr('stroke-width', this.bar_width)
-                .attr('stroke-dasharray', '2,1')
-                // if not `complete` then height starts at 0 and then transitioned according to chart height and y_scale
-                .attr('y2', chart.y_scale(chart.y_in_min))
-                .attr('stroke', function(d) {
-                    return chart.color_scale(d[0]);
-                });
+                .call(this.renderElement, this, complete);
             if ( complete ) {
                 this.parties_toggle[0] = true;
                 this.select();
@@ -516,6 +527,7 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
                 .delay(function(d, i) {
                     return i * 10;
                 })
+                .select('line')
                 .attr('y1', transit_out ? chart.height - chart.padding.y : function(d) {
                     return chart.y_scale(d[1]);
                 })
@@ -532,7 +544,6 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
                         counter += 1;
                     }
                 });
-            return chart;
         },
         zoom        : function (is_in, immediate) {
             var chart = this,
@@ -567,23 +578,10 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
             count = selection[0].length;
             // transition the members to their new X position depending on new zoom
             selection = (immediate ? selection : selection.transition()
-                    .delay(800)
+                    .delay(200)
                     .duration(400))
-                    .attr('x1', function(d, i) {
-                        var x = chart.x_scale(d[0]);
-                        return x === chart.x_out_max ?
-                                    x - chart.bar_width/2 :
-                                    x === chart.x_out_min ?
-                                        x + chart.bar_width/2 :
-                                        x;
-                    })
-                    .attr('x2', function(d, i) {
-                        var x = chart.x_scale(d[0]);
-                        return x === chart.x_out_max ?
-                                    x - chart.bar_width/2 :
-                                    x === chart.x_out_min ?
-                                        x + chart.bar_width/2 :
-                                        x;
+                    .attr('transform', function (d) {
+                        return 'translate(' + chart.x_scale(d[0]) + ',0)'
                     });
             if ( ! immediate ) {
                 selection.each('start', function () {
