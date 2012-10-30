@@ -635,8 +635,8 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
         },
         showDetails : function(data, element) {
             var content = data[3],
-                x = element.attr('x1'),
-                y = element.attr('y1');
+                x = +element.attr('transform').split('(')[1].split(',')[0] + this.bar_width / 2,
+                y = element.select('line').attr('y1');
             return this.tooltip.showTooltip(content, this.color_scale(data[0]), x | 0, y | 0, data[6]);
         },
         hideDetails : function() {
