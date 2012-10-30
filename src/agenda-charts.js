@@ -363,8 +363,8 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
             //# Array.prototype.map
             this.data = data.map(function(member) {
                 return [
-                    member.score,       //0
-                    member.volume,      //1
+                    member.score | 0,   //0
+                    member.volume | 0,  //1
                     member.rank,        //2
                     member.name,        //3
                     member.party,       //4
