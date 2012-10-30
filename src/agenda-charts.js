@@ -344,6 +344,7 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
         this.parties_toggle = {};
         this.zoom_in = false;
         this.member_torso = '0 10,0 1,1 1,1 -1,3 -1,3 1,5 1,5 -1,7 -1,7 1,8 1,8 10';
+        this.volume_threshold = .15;
         this.dispatcher = d3.dispatch('start', 'end');
         this.dispatcher.on('start', function (type) {
             if ( type === 'zoom' )
@@ -393,51 +394,76 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
             return this;
         },
         renderElement   : function (selection, chart, complete) {
-            var bar_w = chart.bar_width;
+            var threshold = (chart.volume_threshold * chart.y_in_max) | 0;
             selection.attr('class', chart.selector.slice(1))
                     .attr('transform', function(d, i) {
                         return 'translate(' + chart.x_scale(d[0]) + ',0)';
-                    })
+                    // for each g element, check if the corresponding member's volume is below or over threshold
+                    // and render accordingly
+                    }).each(function (d, i) {
+                        d3.select(this).call(
+                            d[1] < threshold ?
+                                chart.renderUnder :
+                                chart.renderOver,
+                            chart,
+                            complete
+                        );
+                    });
+        },
+        renderOver      : function (selection, chart, complete) {
+            var bar_w = chart.bar_width;
+            selection.classed('volume_over', true)
                 .append('line')
-                        .attr('x1', 4)
-                        .attr('x2', 4)
-                        .attr('y1', ! complete ? chart.height - chart.padding.y : function(d) {
-                            return chart.y_scale(d[1]);
-                        })
-                         // if not `complete` then height starts at 0 and then transitioned according to chart height and y_scale
-                        .attr('y2', chart.y_scale(chart.y_in_min))
-                        .attr('stroke-width', bar_w)
-                        .attr('stroke-dasharray', '2,1')
-                        .attr('stroke', function(d) {
-                            return chart.color_scale(d[0]);
-                        });
+                    .attr('x1', 4)
+                    .attr('x2', 4)
+                    .attr('y1', ! complete ? chart.height - chart.padding.y : function(d) {
+                        return chart.y_scale(d[1]);
+                    })
+                    // if not `complete` then height starts at 0 and then transitioned according to chart height and y_scale
+                    .attr('y2', chart.y_scale(chart.y_in_min))
+                    .attr('stroke-width', bar_w)
+                    .attr('stroke-dasharray', '2,1')
+                    .attr('stroke', function(d) {
+                        return chart.color_scale(d[0]);
+                    });
             // lets start drawing the person
             selection.append('polygon')
-                        .attr('points', chart.member_torso)
-                        .attr('fill', function(d) {
-                            return chart.color_scale(d[0]);
-                        }).attr('transform', function (d) {
-                            return 'translate(0,' + (complete ? chart.y_scale(d[1]) : chart.height) + ')';
-                        });
+                .attr('points', chart.member_torso)
+                .attr('fill', function(d) {
+                    return chart.color_scale(d[0]);
+                }).attr('transform', function (d) {
+                    return 'translate(0,' + (complete ? chart.y_scale(d[1]) : chart.height) + ')';
+                });
             selection.append('circle')
-                        .attr('cx', 4)
-                        .attr('cy', ! complete ? chart.height - chart.padding.y : function(d) {
-                            return chart.y_scale(d[1]);
-                        })
-                        .attr('stroke', function(d) {
-                            return chart.color_scale(d[0]);
-                        })
-                        .attr('r', ! complete ? 0 : bar_w / 2);
+                .attr('cx', 4)
+                .attr('cy', ! complete ? chart.height - chart.padding.y : function(d) {
+                    return chart.y_scale(d[1]);
+                })
+                .attr('stroke', function(d) {
+                    return chart.color_scale(d[0]);
+                })
+                .attr('r', ! complete ? 0 : bar_w / 2);
             // add a transparent rect to catch the events
             selection.append('rect')
-                        .attr('x', 0)
-                        .attr('y', ! complete ? chart.height - chart.padding.y : function(d) {
-                            return chart.y_scale(d[1]);
-                        })
-                        .attr('width', bar_w)
-                        .attr('height', ! complete ? 0 : function (d) {
-                            return chart.y_scale(d[1]);
-                        });
+                .attr('x', 0)
+                .attr('y', ! complete ? chart.height - chart.padding.y : function(d) {
+                    return chart.y_scale(d[1]);
+                })
+                .attr('width', bar_w)
+                .attr('height', ! complete ? 0 : function (d) {
+                    return chart.y_scale(d[1]);
+                });
+        },
+        renderUnder     : function (selection, chart, complete) {
+            var half_bar_w = chart.bar_width / 2;
+            selection.classed('volume_under', true)
+                .append('circle')
+                    .attr('cx', half_bar_w)
+                    .attr('cy', chart.height - chart.padding.y + half_bar_w * 2)
+                    .attr('stroke', function(d) {
+                        return chart.color_scale(d[0]);
+                    })
+                    .attr('r', ! complete ? 0 : half_bar_w);
         },
         render      : function (complete) {
             var chart = this;
@@ -581,7 +607,7 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
                         .attr('transform', function (d) {
                             return 'translate(0,' + (transit_out ? chart.height : chart.y_scale(d[1])) + ')';
                         });
-            transition.select('circle')
+            transition.filter('.volume_over').select('circle')
                         .attr('cy', transit_out ? chart.height - chart.padding.y : function(d) {
                             return chart.y_scale(d[1]) - chart.bar_width;
                         });
@@ -659,7 +685,7 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
         showDetails : function(data, element) {
             var content = data[3],
                 x = +element.attr('transform').split('(')[1].split(',')[0] + this.bar_width / 2,
-                y = element.select('line').attr('y1') - this.bar_width ;
+                y = element.select('circle').attr('cy');
             return this.tooltip.showTooltip(content, this.color_scale(data[0]), x | 0, y | 0, data[6]);
         },
         hideDetails : function() {
