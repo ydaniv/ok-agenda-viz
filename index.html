@@ -31,9 +31,16 @@ div, h1, h2, p {
 .hide {
     display: none;
 }
-.member {
+.member line {
     fill: none;
     /*opacity: .8;*/
+}
+.member circle {
+    stroke-width: 2;
+    fill: transparent;
+}
+.member rect {
+    fill: transparent;
 }
 .no-events {
     pointer-events: none;
@@ -218,6 +225,7 @@ div, h1, h2, p {
 }
 .overlay-message {
     width: 80%;
+    max-width: 400px;
     color: #fff;
     margin: 10% auto 0;
 }

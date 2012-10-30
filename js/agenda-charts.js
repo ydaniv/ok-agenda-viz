@@ -79,6 +79,7 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
         setYDomain      : function () {
             // set Y scale min and max
             this.y_in_min = 0;
+            //TODO: change max to agenda.votes.length
             this.y_in_max = d3.max(this.data, prop(1)); // by volume
             return this;
         },
@@ -295,7 +296,6 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
                 .attr('r', transit_out ? 0 : function(d) {
                 return chart.r_scale(d[2]);
             });
-            return chart;
         },
         zoom        : function (is_in) {
             //TODO: add transition to scale change
@@ -340,10 +340,11 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
         this.bar_width = options.bar_width || 8;
         this.bar_padding = options.bar_padding || 1;
         this.stroke = options.stroke || 0;
-        this.element = 'line';
+        this.element = 'g';
         this.selector = '.member';
         this.parties_toggle = {};
         this.zoom_in = false;
+        this.member_torso = '0 10,0 1,1 1,1 -1,3 -1,3 1,5 1,5 -1,7 -1,7 1,8 1,8 10';
         this.dispatcher = d3.dispatch('start', 'end');
         this.dispatcher.on('start', function (type) {
             if ( type === 'zoom' )
@@ -363,8 +364,8 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
             //# Array.prototype.map
             this.data = data.map(function(member) {
                 return [
-                    member.score,       //0
-                    member.volume,      //1
+                    member.score | 0,   //0
+                    member.volume | 0,  //1
                     member.rank,        //2
                     member.name,        //3
                     member.party,       //4
@@ -392,6 +393,53 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
             this.y_out_max = defined(y_max, this.padding.y);
             return this;
         },
+        renderElement   : function (selection, chart, complete) {
+            var bar_w = chart.bar_width;
+            selection.attr('class', chart.selector.slice(1))
+                .attr('transform', function(d, i) {
+                    return 'translate(' + chart.x_scale(d[0]) + ',0)';
+                })
+                .append('line')
+                .attr('x1', 4)
+                .attr('x2', 4)
+                .attr('y1', ! complete ? chart.height - chart.padding.y : function(d) {
+                return chart.y_scale(d[1]);
+            })
+                // if not `complete` then height starts at 0 and then transitioned according to chart height and y_scale
+                .attr('y2', chart.y_scale(chart.y_in_min))
+                .attr('stroke-width', bar_w)
+                .attr('stroke-dasharray', '2,1')
+                .attr('stroke', function(d) {
+                    return chart.color_scale(d[0]);
+                });
+            // lets start drawing the person
+            selection.append('polygon')
+                .attr('points', chart.member_torso)
+                .attr('fill', function(d) {
+                    return chart.color_scale(d[0]);
+                }).attr('transform', function (d) {
+                    return 'translate(0,' + (complete ? chart.y_scale(d[1]) : chart.height) + ')';
+                });
+            selection.append('circle')
+                .attr('cx', 4)
+                .attr('cy', ! complete ? chart.height - chart.padding.y : function(d) {
+                return chart.y_scale(d[1]);
+            })
+                .attr('stroke', function(d) {
+                    return chart.color_scale(d[0]);
+                })
+                .attr('r', ! complete ? 0 : bar_w / 2);
+            // add a transparent rect to catch the events
+            selection.append('rect')
+                .attr('x', 0)
+                .attr('y', ! complete ? chart.height - chart.padding.y : function(d) {
+                return chart.y_scale(d[1]);
+            })
+                .attr('width', bar_w)
+                .attr('height', ! complete ? 0 : function (d) {
+                return chart.y_scale(d[1]);
+            });
+        },
         render      : function (complete) {
             var chart = this;
 
@@ -415,23 +463,7 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
                 .enter()
                 // add the member's rectangle
                 .append(this.element)
-                .attr('class', this.selector.slice(1))
-                .attr('x1', function(d, i) {
-                    return chart.x_scale(d[0]);
-                })
-                .attr('x2', function(d, i) {
-                    return chart.x_scale(d[0]);
-                })
-                .attr('y1', ! complete ? chart.height - chart.padding.y : function(d) {
-                return chart.y_scale(d[1]);
-            })
-                .attr('stroke-width', this.bar_width)
-                .attr('stroke-dasharray', '2,1')
-                // if not `complete` then height starts at 0 and then transitioned according to chart height and y_scale
-                .attr('y2', chart.y_scale(chart.y_in_min))
-                .attr('stroke', function(d) {
-                    return chart.color_scale(d[0]);
-                });
+                .call(this.renderElement, this, complete);
             if ( complete ) {
                 this.parties_toggle[0] = true;
                 this.select();
@@ -509,22 +541,35 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
             return this;
         },
         transition  : function (selection, chart, transit_out, callback) {
-            var count = selection[0].length, counter = 1;
-            // transition the radii of all circles
-            selection.transition()
-                .duration(400)
-                .delay(function(d, i) {
-                    return i * 10;
-                })
+            var count = selection[0].length, counter = 1,
+                transition = selection.transition()
+                    .duration(400)
+                    .delay(function(d, i) {
+                        return i * 10;
+                    });
+            // transition the line to stretch up
+            transition.select('line')
                 .attr('y1', transit_out ? chart.height - chart.padding.y : function(d) {
                 return chart.y_scale(d[1]);
             })
                 .each('start', function () {
+                    if ( transit_out ) {
+                        // make the event catching rects disappear
+                        selection.select('rect')
+                            .attr('y', chart.height - chart.padding.y)
+                            .attr('height', 0)
+                    }
                     if ( counter == 1 ) {
                         chart.dispatcher.start('toggle');
                     }
                 })
                 .each('end', function () {
+                    // if transitioning out
+                    if ( transit_out ) {
+                        // make sure we make the person icon disappear at the end of the transition
+                        selection.select('circle')
+                            .attr('r', 0);
+                    }
                     if ( counter === count) {
                         chart.dispatcher.end('toggle');
                         callback && callback();
@@ -532,7 +577,29 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
                         counter += 1;
                     }
                 });
-            return chart;
+            // transition the person icon
+            transition.select('polygon')
+                .attr('transform', function (d) {
+                    return 'translate(0,' + (transit_out ? chart.height : chart.y_scale(d[1])) + ')';
+                });
+            transition.select('circle')
+                .attr('cy', transit_out ? chart.height - chart.padding.y : function(d) {
+                return chart.y_scale(d[1]) - chart.bar_width;
+            });
+            // if transitioning in
+            if ( ! transit_out ) {
+                // make sure the person icon appears
+                selection.select('circle')
+                    .attr('r', chart.bar_width / 2);
+                // make the event catching rects appear
+                selection.select('rect')
+                    .attr('y', function (d) {
+                        return chart.y_scale(d[1]);
+                    })
+                    .attr('height', function (d) {
+                        return chart.height - chart.padding.y - chart.y_scale(d[1])
+                    });
+            }
         },
         zoom        : function (is_in, immediate) {
             var chart = this,
@@ -567,23 +634,12 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
             count = selection[0].length;
             // transition the members to their new X position depending on new zoom
             selection = (immediate ? selection : selection.transition()
-                .delay(800)
+                .delay(200)
                 .duration(400))
-                .attr('x1', function(d, i) {
-                    var x = chart.x_scale(d[0]);
-                    return x === chart.x_out_max ?
-                        x - chart.bar_width/2 :
-                        x === chart.x_out_min ?
-                            x + chart.bar_width/2 :
-                            x;
-                })
-                .attr('x2', function(d, i) {
-                    var x = chart.x_scale(d[0]);
-                    return x === chart.x_out_max ?
-                        x - chart.bar_width/2 :
-                        x === chart.x_out_min ?
-                            x + chart.bar_width/2 :
-                            x;
+                .attr('transform', function (d) {
+                    var x = d[0],
+                        x_out = chart.x_scale(x);
+                    return 'translate(' + (x === chart.x_in_max ? x_out - chart.bar_width : x_out) + ',0)'
                 });
             if ( ! immediate ) {
                 selection.each('start', function () {
@@ -603,8 +659,8 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
         },
         showDetails : function(data, element) {
             var content = data[3],
-                x = element.attr('x1'),
-                y = element.attr('y1');
+                x = +element.attr('transform').split('(')[1].split(',')[0] + this.bar_width / 2,
+                y = element.select('line').attr('y1') - this.bar_width ;
             return this.tooltip.showTooltip(content, this.color_scale(data[0]), x | 0, y | 0, data[6]);
         },
         hideDetails : function() {
