@@ -44,16 +44,21 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
         this.domains = options.domains;
         this.ranges = options.ranges;
         this.mouseover = function(d,i) {
-            that.showDetails(d, d3.select(this));
-            options.mouseover && options.mouseover.call(this, d, i);
+            if ( ! that.events_disabled ) {
+                that.showDetails(d, d3.select(this));
+                options.mouseover && options.mouseover.call(this, d, i);
+            }
         };
         this.mouseout = function(d, i) {
-            that.hideDetails(d, i, this);
-            options.mouseout && options.mouseout.call(this, d, i);
+            if ( ! that.events_disabled ) {
+                that.hideDetails(d, i, this);
+                options.mouseout && options.mouseout.call(this, d, i);
+            }
         };
         this.click = options.click;
         this.touchstart = options.touchstart;
         this.no_axes = options.no_axes;
+        this.dispatcher = d3.dispatch('start', 'end');
         // set canvas width and height
         this.svg.attr('width', this.width)
                 .attr('height', this.height);
@@ -175,6 +180,11 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
                                             .on('touchstart', this.touchstart, false);
             return this;
         },
+        toggleEvents    : function (on) {
+            this.events_disabled = !on;
+            this.svg.classed('no-events', !on);
+            return this;
+        },
         draw            : function () {
             if ( ! this.selection ) {
                 this.render()
@@ -285,7 +295,8 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
             this.addEvents();
             return this;
         },
-        transition  : function (selection, chart, transit_out) {
+        transition  : function (selection, chart, transit_out, callback) {
+            var count = selection.length, counter = 1;
             // transition the radii of all circles
             selection.transition()
                 .duration(200)
@@ -294,12 +305,29 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
                 })
                 .attr('r', transit_out ? 0 : function(d) {
                     return chart.r_scale(d[2]);
+                }).each('start', function () {
+                    if ( counter == 1 ) {
+                        chart.toggleEvents(false);
+                        chart.dispatcher.start('toggle');
+                    }
+                })
+                .each('end', function () {
+                    if ( counter === count) {
+                        transit_out || chart.toggleEvents(true);
+                        chart.dispatcher.end('toggle');
+                        callback && callback();
+                    } else {
+                        counter += 1;
+                    }
                 });
+            if ( transit_out ) {
+                chart.hideDetails();
+            }
         },
         zoom        : function (is_in) {
             //TODO: add transition to scale change
             var chart = this,
-                getScore = prop(0);
+                count = this.selection.all.length, counter = 1;
             // if `is_in` is not specified then toggle state
             if ( ! arguments.length ) {
                 is_in = ! this.zoom_in;
@@ -315,10 +343,23 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
             // change data to new selection and redraw the selected party
             this.svg.data(this.data).selectAll(this.selector)
                 .transition()
-                    .delay(500)
                     .duration(500)
                     .attr('cx', function(d, i) {
                         return chart.x_scale(d[0]);
+                    })
+                    .each('start', function () {
+                        if ( counter == 1 ) {
+                            chart.toggleEvents(false);
+                            chart.dispatcher.start('zoom');
+                        }
+                    })
+                    .each('end', function () {
+                        if ( counter === count) {
+                            chart.toggleEvents(true);
+                            chart.dispatcher.end('zoom');
+                        } else {
+                            counter += 1;
+                        }
                     });
             return this;
         },
@@ -345,15 +386,6 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
         this.zoom_in = false;
         this.member_torso = '0 10,0 1,1 1,1 -1,3 -1,3 1,5 1,5 -1,7 -1,7 1,8 1,8 10';
         this.volume_threshold = .15;
-        this.dispatcher = d3.dispatch('start', 'end');
-        this.dispatcher.on('start', function (type) {
-            if ( type === 'zoom' )
-                _self.in_transition = true;
-        })
-        .on('end', function (type) {
-            if ( type === 'zoom' )
-                _self.in_transition = false;
-        });
 
         this.svg.append('defs');
     }
@@ -664,6 +696,9 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
                     .attr('transform', function (d) {
                         var x = d[0],
                             x_out = chart.x_scale(x);
+                        if ( chart.focused_member === d[8] ) {
+                            chart.tooltip.updatePosition(x_out, chart.y_scale(d[1]));
+                        }
                         return 'translate(' + (x === chart.x_in_max ? x_out - chart.bar_width : x_out) + ',0)'
                     });
             if ( ! immediate ) {

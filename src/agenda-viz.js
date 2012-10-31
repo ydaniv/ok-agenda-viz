@@ -19,6 +19,10 @@ define(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When) {
                 res = (match && match[1]) || null;
             return res ? decodeURIComponent(res) : res;
         }()),
+        initial_member = (function () {
+            var hash = window.location.hash;
+            return hash ? +hash.slice(1) : null;
+        }()),
         // `document.body` in IE8
         window_height = document.body ? document.body.clientHeight : window.innerHeight,
         window_width = document.body ? document.body.clientWidth : window.innerWidth,
@@ -122,12 +126,8 @@ define(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When) {
                         d3.select(this).transition().duration(200).attr('fill-opacity', 0);
                     },
                     click       : function (party) {
-                        var party_id;
                         if ( ! parties_touches ) {
-                            party_id = party[4];
-                            // doesn't seem to trigger 'change' event, at least not on chrome
-                            parties_menu.property('value', party_id);
-                            dispatcher.change_party(party_id);
+                            enterPartyHandler(party[4], this);
                         }
                     },
                     touchstart  : function (party) {
@@ -135,9 +135,7 @@ define(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When) {
                         var parties_touches = d3.touches(parties_chart.svg.node().parentNode).length,
                             party_id = party[4];
                         if ( members_chart.parties_toggle[party_id] ) {
-                            // doesn't seem to trigger 'change' event, at least not on chrome
-                            parties_menu.property('value', party_id);
-                            dispatcher.change_party(party_id);
+                            enterPartyHandler(party_id, this);
                         }
                         else {
                             parties_chart.selection.all.attr('fill-opacity', function (d) {
@@ -147,7 +145,14 @@ define(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When) {
                         }
                     },
                     no_axes     : true
-                }).draw(),
+                }),
+                enterPartyHandler = function (party_id, el) {
+                    parties_chart.toggleEvents(false);
+                    d3.select(el).attr('fill-opacity', 0);
+                    // doesn't seem to trigger 'change' event, at least not on chrome
+                    parties_menu.property('value', party_id);
+                    dispatcher.change_party(party_id);
+                },
                 openMemberHandler = function (member) {
                     if ( OVERRIDE_MEMBERS_CLICK && HOSTNAME ) {
                         parent.postMessage(member[8], HOSTNAME);
@@ -170,9 +175,14 @@ define(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When) {
                         members_touches = d3.touches(members_chart.svg.node().parentNode).length;
                         selectMemberHandler(member, this);
                     }
-                }).render(),
+                }),
                 selectMemberHandler = function (member, el) {
                     var member_id = member[8];
+                    if ( ! el ) {
+                        members_chart.selection.all.each(function (d) {
+                            if ( d[8] === member_id ) el = this;
+                        });
+                    }
                     // if this is a second selection on the focuesd member
                     if ( members_chart.focused_member === member_id ) {
                         // open the link to the member
@@ -198,16 +208,9 @@ define(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When) {
                     members_chart.focused_member = 0;
                     members_chart.hideDetails();
                 },
-                parties_view = true;
+                parties_view = ! initial_member;
 
-            // after parties chart was initialised with default X scale domain,
-            // set it's X domain to the min/max of members' scores
-            parties_chart.domains =[
-                d3.min(members_data, function (d) {return d.score;}),
-                d3.max(members_data, function (d) {return d.score;})
-            ];
-
-            dispatcher.on('change_party', function (party_id) {debugger;
+            dispatcher.on('change_party', function (party_id) {
                 var is_all = !+party_id,
                     zoom_out = function () {
                         members_chart.zoom(parties_chart.zoom_in ? 'all' : false, true);
@@ -228,7 +231,7 @@ define(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When) {
                 // toggle all parties
                 parties_chart.selection.all.call(parties_chart.transition, parties_chart, !is_all);
                 // toggle the transparency of the parties chart to events, to enable those on the members chart that's underneath it
-                parties_chart.svg.classed('no-events', !is_all);
+                parties_chart.toggleEvents(is_all);
             });
             // IE can't set innerHTML of select, need to use the .options.add interface
             if ( typeof parties_menu[0][0].options.add == 'function' ) {
@@ -300,6 +303,35 @@ define(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When) {
             };
             d3.select('#embed-link').on('click', embedHandler);
             d3.select('#share-link').on('click', shareHandler);
+
+            // initialize charts
+            // check if there's an initial state of a selected member
+            var member = agenda.members.filter(function (item) {
+                return item.id === initial_member;
+            })[0];
+
+            if ( initial_member && member ) {
+                parties_chart.render();
+                members_chart.render();
+                parties_menu.property('value', member.party_id);
+                //# Array.prototype.filter
+                members_chart.show(member.party_id, true, function () {
+                    selectMemberHandler(members_chart.selection.all.filter(function (d) {
+                        return d[8] === initial_member;
+                    }).data()[0]);
+                });
+                members_chart.zoom(true, true);
+                parties_chart.svg.toggleEvents(false);
+            } else {
+                parties_chart.draw();
+                members_chart.render();
+            }
+            // after parties chart was initialised with default X scale domain,
+            // set it's X domain to the min/max of members' scores
+            parties_chart.domains =[
+                d3.min(members_data, function (d) {return d.score;}),
+                d3.max(members_data, function (d) {return d.score;})
+            ];
         }
     );
 });
