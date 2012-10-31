@@ -523,17 +523,21 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
             var chart = this;
 
             this.selection = {
-                all     : null,
-                getParty: function (id) {
+                all         : null,
+                getParty    : function (id) {
                     if ( !(id in this.parties) ) {
-                        //# Array.prototype.filter
                         this.parties[id] = this.all.filter(function (d, i) {
                             return d[5] === id;
                         });
                     }
                     return this.parties[id];
                 },
-                parties : {}
+                getMember   : function (id) {
+                    return this.all.filter(function (d) {
+                        return d[8] === id;
+                    });
+                },
+                parties     : {}
             };
             this.setScales()
                 .createAxes();
