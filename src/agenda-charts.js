@@ -123,20 +123,42 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
             return this;
         },
         createAxes      : function () {
-            var color_axis;
+            var color_axis, n, dy;
             if ( ! this.no_axes ) {
+                if ( this.x_axis ) {
+                    this.x_axis.remove();
+                } 
                 // create X axis
-//                this.x_axis = d3.svg.axis();
-//                this.x_axis.scale(this.x_scale);
+                this.x_axis = this.svg.append('line')
+                    .attr('x1', this.x_scale(0))
+                    .attr('y1', 0)
+                    .attr('x2', this.x_scale(0))
+                    .attr('y2', this.height)
+                    .attr('stroke', '#E6E6E6')
+                    .attr('stroke-width', 1);
+
+                // create the Y axis
+                if ( ! this.y_axis ) {
+                    this.y_axis = IE8_COMPAT_MODE ? this.svg : this.svg.append('g');
+                    dy = (this.height - 2 * this.padding.y) / 20;
+                    for ( n = 1; n < 21 ; n++ ) {
+                        this.y_axis.append('line')
+                            .attr('x1', 0)
+                            .attr('y1', n * dy)
+                            .attr('x2', this.width)
+                            .attr('y2', n * dy)
+                            .attr('stroke', '#D9EEFD')
+                            .attr('stroke-width', 1)
+                            .attr('stroke-dasharray', '6,3');
+                    }
+                }
+
                 // create the color axis
                 if ( ! this.color_grad ) {
                     this.color_grad = this.svg.select('defs').append('linearGradient')
                                                                 .attr('id', 'color-axis');
-                    if ( IE8_COMPAT_MODE ) {
-                        color_axis = this.svg;
-                    } else {
-                        color_axis = this.svg.append('g');
-                    }
+
+                    color_axis = IE8_COMPAT_MODE ? this.svg : this.svg.append('g');
 
                     color_axis.append('rect')
                         .attr('x', this.padding.x)
@@ -513,9 +535,10 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
                 },
                 parties : {}
             };
-            this.selection.all = this.setScales()
-                .createAxes()
-                .svg.selectAll(this.selector)
+            this.setScales()
+                .createAxes();
+
+            this.selection.all = this.svg.selectAll(this.selector)
                 .data(this.data)
                 .enter()
                 // add the member's rectangle
