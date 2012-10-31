@@ -48,7 +48,7 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
             options.mouseover && options.mouseover.call(this, d, i);
         };
         this.mouseout = function(d, i) {
-            that.hideDetails();
+            that.hideDetails(d, i, this);
             options.mouseout && options.mouseout.call(this, d, i);
         };
         this.click = options.click;
@@ -322,13 +322,13 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
                     });
             return this;
         },
-        showDetails : function(data, element) {
+        showDetails : function (data, element) {
             var content = data[3],
                 x = element.attr('cx'),
                 y = element.attr('cy') - element.attr('r');
             return this.tooltip.showTooltip(content, this.color_scale(data[0]), x | 0, y | 0);
         },
-        hideDetails : function() {
+        hideDetails : function () {
             return this.tooltip.hideTooltip();
         }
     });
@@ -566,7 +566,7 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
             return this;
         },
         transition      : function (selection, chart, transit_out, callback) {
-            var count = selection[0].length, counter = 1,
+            var count = selection.filter('.volume_over')[0].length, counter = 1,
                 transition = selection.transition()
                     .duration(400)
                     .delay(function(d, i) {
@@ -682,14 +682,16 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
             }
             return this;
         },
-        showDetails     : function(data, element) {
+        showDetails     : function (data, element) {
             var content = data[3],
                 x = +element.attr('transform').split('(')[1].split(',')[0] + this.bar_width / 2,
                 y = element.select('circle').attr('cy');
             return this.tooltip.showTooltip(content, this.color_scale(data[0]), x | 0, y | 0, data[6]);
         },
-        hideDetails     : function() {
-            return this.tooltip.hideTooltip();
+        hideDetails     : function (d, i, el) {
+            if ( ! d || this.focused_member !== d[8] ) {
+                return this.tooltip.hideTooltip();
+            }
         }
     });
 

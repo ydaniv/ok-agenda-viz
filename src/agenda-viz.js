@@ -24,31 +24,34 @@ define(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When) {
         window_width = document.body ? document.body.clientWidth : window.innerWidth,
         EMBED_SNIPPET = '<iframe width="600" height="400" src="' + window.location.href + '"></iframe>',
         Model = {
-            get : function (url) {
+            get : function (url, refresh) {
                 var deferred = When.defer(),
                     that = this,
                     cache = this.cache(url);
                 if ( cache ) {
-                    deferred.resolve(cache);
+                    if ( refresh ) {
+                        this.cache(url, null); // clear this from cache
+                    } else {
+                        deferred.resolve(cache);
+                        return deferred.promise;
+                    }
                 }
-                else {
-                    //TODO: consider using d3.xhr
-                    Reqwest({
-                        url     : url,
-                        type    : 'jsonp',
-                        success : function (response) {
-                            window.console && console.log(response);
-                            that.cache(url, response);
-                            deferred.resolve(response);
-                        },
-                        error   : function () {
-                            try {
-                                window.console && console.error('Failed to get ' + url, arguments);
-                            } catch (e) {alert('Failed to get ' + url);}
-                            deferred.reject(arguments[1]);
-                        }
-                    });
-                }
+                //TODO: consider using d3.xhr
+                Reqwest({
+                    url     : url,
+                    type    : 'jsonp',
+                    success : function (response) {
+                        window.console && console.log(response);
+                        that.cache(url, response);
+                        deferred.resolve(response);
+                    },
+                    error   : function () {
+                        try {
+                            window.console && console.error('Failed to get ' + url, arguments);
+                        } catch (e) {alert('Failed to get ' + url);}
+                        deferred.reject(arguments[1]);
+                    }
+                });
                 return deferred.promise;
             },
             cache   : function (key, data) {
@@ -57,7 +60,11 @@ define(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When) {
                         return JSON.parse(localStorage.getItem(key));
                     }
                     else {
-                        localStorage.setItem(key, JSON.stringify(data));
+                        if ( data === null ) {
+                            localStorage.removeItem(key);
+                        } else {
+                            localStorage.setItem(key, JSON.stringify(data));
+                        }
                     }
                 } catch (e) {}
             }
@@ -74,7 +81,7 @@ define(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When) {
     // when.js also wraps the resolved and rejected calls in `try-catch` statements
     When.all(
         [Parties.get('http://oknesset.org/api/v2/party/?callback=?'),
-        Agenda.get('http://oknesset.org/api/v2/agenda/' + agenda_id + '/?callback=?'),
+        Agenda.get('http://oknesset.org/api/v2/agenda/' + agenda_id + '/?callback=?', true),
         Members.get('http://oknesset.org/api/v2/member/?callback=?')],
         function (responses) {
             var parties = responses[0],
@@ -153,23 +160,44 @@ define(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When) {
                     data        : members_data,
                     container   : '#charts',
                     id          : 'members-canvas',
-                    click       : function (member, i) {
+                    click       : function (member) {
                         if ( ! members_touches ) {
-                            openMemberHandler(member);
+                            selectMemberHandler(member, this);
                         }
                     },
-                    touchstart  : function (member, i) {
+                    touchstart  : function (member) {
                         // just detect that a touch event was triggered to prevent the click handler
-                        var members_touches = d3.touches(members_chart.svg.node().parentNode).length;
-                        if ( members_chart.focused_member === i ) {
-                            openMemberHandler(member);
-                        }
-                        else {
-                            members_chart.focused_member = i;
-                            members_chart.showDetails(member, d3.select(this));
-                        }
+                        members_touches = d3.touches(members_chart.svg.node().parentNode).length;
+                        selectMemberHandler(member, this);
                     }
                 }).render(),
+                selectMemberHandler = function (member, el) {
+                    var member_id = member[8];
+                    // if this is a second selection on the focuesd member
+                    if ( members_chart.focused_member === member_id ) {
+                        // open the link to the member
+                        openMemberHandler(member);
+                    }
+                    // if this is a new selection
+                    else {
+                        // if there's a previous focused member
+                        if ( members_chart.focused_member ) {
+                            // hide its tooltip
+                            members_chart.hideDetails(member);
+                        }
+                        // set the hash to this member's id
+                        window.location.hash = '#' + member_id;
+                        // set the current focused member
+                        members_chart.focused_member = member[8];
+                        // show this member's tooltip
+                        members_chart.showDetails(member, d3.select(el));
+                    }
+                },
+                clearMemberSelection = function () {
+                    window.location.hash = '';
+                    members_chart.focused_member = 0;
+                    members_chart.hideDetails();
+                },
                 parties_view = true;
 
             // after parties chart was initialised with default X scale domain,
@@ -179,11 +207,12 @@ define(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When) {
                 d3.max(members_data, function (d) {return d.score;})
             ];
 
-            dispatcher.on('change_party', function (party_id) {
+            dispatcher.on('change_party', function (party_id) {debugger;
                 var is_all = !+party_id,
                     zoom_out = function () {
                         members_chart.zoom(parties_chart.zoom_in ? 'all' : false, true);
                     };
+                clearMemberSelection();
                 parties_chart.selection.all.each(function (d) {
                     var id = d[4];
                     if ( party_id != id && members_chart.parties_toggle[id] ) {
