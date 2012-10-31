@@ -44,16 +44,21 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
         this.domains = options.domains;
         this.ranges = options.ranges;
         this.mouseover = function(d,i) {
-            that.showDetails(d, d3.select(this));
-            options.mouseover && options.mouseover.call(this, d, i);
+            if ( ! that.events_disabled ) {
+                that.showDetails(d, d3.select(this));
+                options.mouseover && options.mouseover.call(this, d, i);
+            }
         };
         this.mouseout = function(d, i) {
-            that.hideDetails();
-            options.mouseout && options.mouseout.call(this, d, i);
+            if ( ! that.events_disabled ) {
+                that.hideDetails(d, i, this);
+                options.mouseout && options.mouseout.call(this, d, i);
+            }
         };
         this.click = options.click;
         this.touchstart = options.touchstart;
         this.no_axes = options.no_axes;
+        this.dispatcher = d3.dispatch('start', 'end');
         // set canvas width and height
         this.svg.attr('width', this.width)
             .attr('height', this.height);
@@ -79,7 +84,6 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
         setYDomain      : function () {
             // set Y scale min and max
             this.y_in_min = 0;
-            //TODO: change max to agenda.votes.length
             this.y_in_max = d3.max(this.data, prop(1)); // by volume
             return this;
         },
@@ -176,6 +180,11 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
                 .on('touchstart', this.touchstart, false);
             return this;
         },
+        toggleEvents    : function (on) {
+            this.events_disabled = !on;
+            this.svg.classed('no-events', !on);
+            return this;
+        },
         draw            : function () {
             if ( ! this.selection ) {
                 this.render()
@@ -222,8 +231,8 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
             }
             this.x_out_min = defined(x_min, this.padding.x);
             this.x_out_max = defined(x_max, this.width - this.padding.x);
-            this.y_out_min = defined(y_min, this.height - this.padding.y - this.r_in_max * 2);
-            this.y_out_max = defined(y_max, this.padding.y + this.r_in_max * 2);
+            this.y_out_min = defined(y_min, this.height - this.padding.y);
+            this.y_out_max = defined(y_max, this.padding.y);
             this.r_out_min = defined(r_min, this.r_in_min * 2);
             this.r_out_max = defined(r_max, this.r_in_max * 2);
             return this;
@@ -286,7 +295,8 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
             this.addEvents();
             return this;
         },
-        transition  : function (selection, chart, transit_out) {
+        transition  : function (selection, chart, transit_out, callback) {
+            var count = selection.length, counter = 1;
             // transition the radii of all circles
             selection.transition()
                 .duration(200)
@@ -295,12 +305,29 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
             })
                 .attr('r', transit_out ? 0 : function(d) {
                 return chart.r_scale(d[2]);
-            });
+            }).each('start', function () {
+                    if ( counter == 1 ) {
+                        chart.toggleEvents(false);
+                        chart.dispatcher.start('toggle');
+                    }
+                })
+                .each('end', function () {
+                    if ( counter === count) {
+                        transit_out || chart.toggleEvents(true);
+                        chart.dispatcher.end('toggle');
+                        callback && callback();
+                    } else {
+                        counter += 1;
+                    }
+                });
+            if ( transit_out ) {
+                chart.hideDetails();
+            }
         },
         zoom        : function (is_in) {
             //TODO: add transition to scale change
             var chart = this,
-                getScore = prop(0);
+                count = this.selection.all.length, counter = 1;
             // if `is_in` is not specified then toggle state
             if ( ! arguments.length ) {
                 is_in = ! this.zoom_in;
@@ -316,20 +343,33 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
             // change data to new selection and redraw the selected party
             this.svg.data(this.data).selectAll(this.selector)
                 .transition()
-                .delay(500)
                 .duration(500)
                 .attr('cx', function(d, i) {
                     return chart.x_scale(d[0]);
+                })
+                .each('start', function () {
+                    if ( counter == 1 ) {
+                        chart.toggleEvents(false);
+                        chart.dispatcher.start('zoom');
+                    }
+                })
+                .each('end', function () {
+                    if ( counter === count) {
+                        chart.toggleEvents(true);
+                        chart.dispatcher.end('zoom');
+                    } else {
+                        counter += 1;
+                    }
                 });
             return this;
         },
-        showDetails : function(data, element) {
+        showDetails : function (data, element) {
             var content = data[3],
                 x = element.attr('cx'),
                 y = element.attr('cy') - element.attr('r');
             return this.tooltip.showTooltip(content, this.color_scale(data[0]), x | 0, y | 0);
         },
-        hideDetails : function() {
+        hideDetails : function () {
             return this.tooltip.hideTooltip();
         }
     });
@@ -345,22 +385,14 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
         this.parties_toggle = {};
         this.zoom_in = false;
         this.member_torso = '0 10,0 1,1 1,1 -1,3 -1,3 1,5 1,5 -1,7 -1,7 1,8 1,8 10';
-        this.dispatcher = d3.dispatch('start', 'end');
-        this.dispatcher.on('start', function (type) {
-            if ( type === 'zoom' )
-                _self.in_transition = true;
-        })
-            .on('end', function (type) {
-                if ( type === 'zoom' )
-                    _self.in_transition = false;
-            });
+        this.volume_threshold = .15;
 
         this.svg.append('defs');
     }
 
     MembersChart.prototype = extend(Object.create(Chart.prototype), {
-        constructor : MembersChart,
-        setData     : function (data) {
+        constructor     : MembersChart,
+        setData         : function (data) {
             //# Array.prototype.map
             this.data = data.map(function(member) {
                 return [
@@ -380,7 +412,7 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
                 });
             return this;
         },
-        setRanges   : function (x_min, x_max, y_min, y_max) {
+        setRanges       : function (x_min, x_max, y_min, y_max) {
             // if ranges was set in options
             if ( this.ranges && ! this.ranges_set ) {
                 this.ranges_set = true;
@@ -394,11 +426,25 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
             return this;
         },
         renderElement   : function (selection, chart, complete) {
-            var bar_w = chart.bar_width;
+            var threshold = (chart.volume_threshold * chart.y_in_max) | 0;
             selection.attr('class', chart.selector.slice(1))
                 .attr('transform', function(d, i) {
                     return 'translate(' + chart.x_scale(d[0]) + ',0)';
-                })
+                    // for each g element, check if the corresponding member's volume is below or over threshold
+                    // and render accordingly
+                }).each(function (d, i) {
+                    d3.select(this).call(
+                        d[1] < threshold ?
+                            chart.renderUnder :
+                            chart.renderOver,
+                        chart,
+                        complete
+                    );
+                });
+        },
+        renderOver      : function (selection, chart, complete) {
+            var bar_w = chart.bar_width;
+            selection.classed('volume_over', true)
                 .append('line')
                 .attr('x1', 4)
                 .attr('x2', 4)
@@ -440,7 +486,18 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
                 return chart.y_scale(d[1]);
             });
         },
-        render      : function (complete) {
+        renderUnder     : function (selection, chart, complete) {
+            var half_bar_w = chart.bar_width / 2;
+            selection.classed('volume_under', true)
+                .append('circle')
+                .attr('cx', half_bar_w)
+                .attr('cy', chart.height - chart.padding.y + half_bar_w * 2)
+                .attr('stroke', function(d) {
+                    return chart.color_scale(d[0]);
+                })
+                .attr('r', ! complete ? 0 : half_bar_w);
+        },
+        render          : function (complete) {
             var chart = this;
 
             this.selection = {
@@ -472,14 +529,14 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
             this.addEvents();
             return this;
         },
-        select      : function (id, dont_set) {
+        select          : function (id, dont_set) {
             var selection = arguments.length ? this.selection.getParty(id) : this.selection.all;
             if ( ! dont_set ) {
                 this.selection.current = selection;
             }
             return selection;
         },
-        toggle      : function (party, show_hide) {
+        toggle          : function (party, show_hide) {
             var id;
             // if party is NOT party_id but a selection
             id = typeof party === 'number' ? party : party.data()[0][5];
@@ -491,7 +548,7 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
             }
             return this;
         },
-        single      : function (party, dont_set) {
+        single          : function (party, dont_set) {
             var id, pid;
             // if party is NOT party_id but a selection
             id = typeof party === 'number' ? party : party.data()[0][5];
@@ -508,7 +565,7 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
             this.toggle(id, dont_set);
             return this;
         },
-        show        : function (party, override_persist, callback) {
+        show            : function (party, override_persist, callback) {
             var id;
             // if party is NOT party_id but a selection
             id = typeof party === 'number' ? party : party.data()[0][5];
@@ -524,7 +581,7 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
             }
             return this;
         },
-        hide        : function (party, override_persist, callback) {
+        hide            : function (party, override_persist, callback) {
             var id;
             // if party is NOT party_id but a selection
             id = typeof party === 'number' ? party : party.data()[0][5];
@@ -540,8 +597,8 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
             }
             return this;
         },
-        transition  : function (selection, chart, transit_out, callback) {
-            var count = selection[0].length, counter = 1,
+        transition      : function (selection, chart, transit_out, callback) {
+            var count = selection.filter('.volume_over')[0].length, counter = 1,
                 transition = selection.transition()
                     .duration(400)
                     .delay(function(d, i) {
@@ -582,7 +639,7 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
                 .attr('transform', function (d) {
                     return 'translate(0,' + (transit_out ? chart.height : chart.y_scale(d[1])) + ')';
                 });
-            transition.select('circle')
+            transition.filter('.volume_over').select('circle')
                 .attr('cy', transit_out ? chart.height - chart.padding.y : function(d) {
                 return chart.y_scale(d[1]) - chart.bar_width;
             });
@@ -601,7 +658,7 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
                     });
             }
         },
-        zoom        : function (is_in, immediate) {
+        zoom            : function (is_in, immediate) {
             var chart = this,
                 getScore = prop(0),
                 counter = 1,
@@ -639,6 +696,9 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
                 .attr('transform', function (d) {
                     var x = d[0],
                         x_out = chart.x_scale(x);
+                    if ( chart.focused_member === d[8] ) {
+                        chart.tooltip.updatePosition(x_out, chart.y_scale(d[1]));
+                    }
                     return 'translate(' + (x === chart.x_in_max ? x_out - chart.bar_width : x_out) + ',0)'
                 });
             if ( ! immediate ) {
@@ -657,14 +717,16 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
             }
             return this;
         },
-        showDetails : function(data, element) {
+        showDetails     : function (data, element) {
             var content = data[3],
                 x = +element.attr('transform').split('(')[1].split(',')[0] + this.bar_width / 2,
-                y = element.select('line').attr('y1') - this.bar_width ;
+                y = element.select('circle').attr('cy');
             return this.tooltip.showTooltip(content, this.color_scale(data[0]), x | 0, y | 0, data[6]);
         },
-        hideDetails : function() {
-            return this.tooltip.hideTooltip();
+        hideDetails     : function (d, i, el) {
+            if ( ! d || this.focused_member !== d[8] ) {
+                return this.tooltip.hideTooltip();
+            }
         }
     });
 
