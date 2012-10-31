@@ -218,11 +218,14 @@ define(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When) {
                     }
                 },
                 clearMemberSelection = function () {
+                    var last_member = members_chart.selection.getMember(members_chart.focused_member);
                     if ( /member_\d+/.test(window.location.hash) ) {
                         dispatcher.change_hash('');
                     }
+                    last_member.select('image').remove();
+                    last_member.select('circle').attr('r', members_chart.bar_width / 2);
                     members_chart.focused_member = 0;
-                    members_chart.hideDetails();
+                    members_chart.hideDetails(last_member.data());
                 },
                 parties_view = ! initial_member;
 
