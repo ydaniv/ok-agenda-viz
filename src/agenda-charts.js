@@ -129,7 +129,7 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
                     this.x_axis.remove();
                 } 
                 // create X axis
-                this.x_axis = this.svg.append('line')
+                this.x_axis = this.svg.insert('line', ':first-child')
                     .attr('x1', this.x_scale(0))
                     .attr('y1', 0)
                     .attr('x2', this.x_scale(0))
