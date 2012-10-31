@@ -19,14 +19,18 @@ define(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When) {
                 res = (match && match[1]) || null;
             return res ? decodeURIComponent(res) : res;
         }()),
+        initial_party = null,
         initial_member = (function () {
             var hash = window.location.hash;
-            return hash ? +hash.slice(1) : null;
+            if ( /member_\d+/.test(hash) ) {
+                return +hash.split('_')[1];
+            }
+            else if ( /party_\d+/.test(hash) ) {
+                initial_party = +hash.split('_')[1];
+            }
+            return null;
         }()),
-    // `document.body` in IE8
-        window_height = document.body ? document.body.clientHeight : window.innerHeight,
-        window_width = document.body ? document.body.clientWidth : window.innerWidth,
-        EMBED_SNIPPET = '<iframe width="600" height="400" src="' + window.location.href + '"></iframe>',
+        embed_snippet = '<iframe width="600" height="400" src="' + window.location.href + '"></iframe>',
         Model = {
             get : function (url, refresh) {
                 var deferred = When.defer(),
@@ -110,7 +114,7 @@ define(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When) {
                         }
                     });
                 }), agenda.members),
-                dispatcher = d3.dispatch('change_party'),
+                dispatcher = d3.dispatch('change_party', 'change_hash'),
                 parties_touches = 0,
                 parties_chart = new Charts.PartiesChart({
                     data        : parties_data,
@@ -147,6 +151,7 @@ define(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When) {
                     no_axes     : true
                 }),
                 enterPartyHandler = function (party_id, el) {
+                    dispatcher.change_hash('party_' + party_id);
                     parties_chart.toggleEvents(false);
                     d3.select(el).attr('fill-opacity', 0);
                     // doesn't seem to trigger 'change' event, at least not on chrome
@@ -196,7 +201,7 @@ define(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When) {
                             members_chart.hideDetails(member);
                         }
                         // set the hash to this member's id
-                        window.location.hash = '#' + member_id;
+                        dispatcher.change_hash('member_' + member_id);
                         // set the current focused member
                         members_chart.focused_member = member[8];
                         // show this member's tooltip
@@ -204,7 +209,9 @@ define(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When) {
                     }
                 },
                 clearMemberSelection = function () {
-                    window.location.hash = '';
+                    if ( /member_\d+/.test(window.location.hash) ) {
+                        dispatcher.change_hash('');
+                    }
                     members_chart.focused_member = 0;
                     members_chart.hideDetails();
                 },
@@ -232,6 +239,15 @@ define(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When) {
                 parties_chart.selection.all.call(parties_chart.transition, parties_chart, !is_all);
                 // toggle the transparency of the parties chart to events, to enable those on the members chart that's underneath it
                 parties_chart.toggleEvents(is_all);
+                // clear party selection if needed
+                dispatcher.change_hash(is_all ? '' : 'party_' + party_id);
+            });
+            dispatcher.on('change_hash', function (hash) {
+                window.location.hash = hash ? '#' + hash : '';
+                embed_snippet = embed_snippet.replace(/src="[^#]+#?(.*)"/, function (match, old_hash) {
+                    return old_hash ? match.replace(old_hash, hash) : match + (~ match.indexOf('#') ? hash : '#' + hash);
+                });
+                d3.select('#embed-snippet').property('value', embed_snippet);
             });
             // IE can't set innerHTML of select, need to use the .options.add interface
             if ( typeof parties_menu[0][0].options.add == 'function' ) {
@@ -282,7 +298,7 @@ define(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When) {
                 .attr('href', BASE_URL + agenda.absolute_url);
             d3.select('#number-of-votes').text(agenda.votes.length);
             d3.select('#loader').transition().delay(200).duration(400).style('top', '100%').style('opacity', 0);
-            d3.select('#embed-snippet').property('value', EMBED_SNIPPET).on('click', function () { this.select(); });
+            d3.select('#embed-snippet').property('value', embed_snippet).on('click', function () { this.select(); });
             d3.select('#share-snippet').property('value', BASE_URL + agenda.absolute_url).on('click', function () { this.select(); });
 
             var embedHandler = function () {
@@ -306,11 +322,13 @@ define(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When) {
 
             // initialize charts
             // check if there's an initial state of a selected member
-            var member = agenda.members.filter(function (item) {
-                return item.id === initial_member;
-            })[0];
+            if ( initial_member ) {
+                var member = agenda.members.filter(function (item) {
+                    return item.id === initial_member;
+                })[0];
+            }
 
-            if ( initial_member && member ) {
+            if ( member ) {
                 parties_chart.render();
                 members_chart.render();
                 parties_menu.property('value', member.party_id);
@@ -321,7 +339,13 @@ define(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When) {
                     }).data()[0]);
                 });
                 members_chart.zoom(true, true);
-                parties_chart.svg.toggleEvents(false);
+                parties_chart.toggleEvents(false);
+            } else if ( initial_party ) {
+                parties_chart.render();
+                members_chart.render();
+                parties_menu.property('value', initial_party);
+                members_chart.show(initial_party, true);
+                parties_chart.toggleEvents(false);
             } else {
                 parties_chart.draw();
                 members_chart.render();
