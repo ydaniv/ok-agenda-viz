@@ -486,9 +486,11 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
                 .attr('points', chart.member_torso)
                 .attr('fill', function(d) {
                     return chart.color_scale(d[0]);
-                }).attr('transform', function (d) {
+                })
+                .attr('transform', function (d) {
                     return 'translate(0,' + (complete ? chart.y_scale(d[1]) : chart.height) + ')';
-                });
+                })
+                .style('visibility', complete ? 'visible' : 'hidden');
             selection.append('circle')
                 .attr('cx', 4)
                 .attr('cy', ! complete ? chart.height - chart.padding.y : function(d) {
@@ -565,6 +567,8 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
                     else {
                         selection.select('circle')
                                 .attr('r', chart.bar_width / 2);
+                        selection.select('polygon')
+                                .style('visibility', 'visible');
                     }
                 }
             });
@@ -573,6 +577,8 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
                     // make sure we make the person icon disappear at the end of the transition
                     selection.select('circle')
                             .attr('r', 0);
+                    selection.select('polygon')
+                        .style('visibility', 'hidden');
                 }
             });
 
