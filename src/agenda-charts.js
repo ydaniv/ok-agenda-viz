@@ -553,6 +553,29 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
                 this.parties_toggle[0] = true;
                 this.select();
             }
+
+            this.dispatcher.on('start', function (type, selection, out) {
+                if ( type === 'toggle' ) {
+                    if ( out ) {
+                        // make the event catching rects disappear
+                        selection.select('rect')
+                                .attr('y', chart.height - chart.padding.y)
+                                .attr('height', 0);
+                    }
+                    else {
+                        selection.select('circle')
+                                .attr('r', chart.bar_width / 2);
+                    }
+                }
+            });
+            this.dispatcher.on('end', function (type, selection, out) {
+                if ( type === 'toggle' && out ) {
+                    // make sure we make the person icon disappear at the end of the transition
+                    selection.select('circle')
+                            .attr('r', 0);
+                }
+            });
+
             this.tooltip = Tooltip(this.svg);
             this.persistip = Tooltip(this.svg);
             this.addEvents();
@@ -639,25 +662,13 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
                     return chart.y_scale(d[1]);
                 })
                 .each('start', function () {
-                    if ( transit_out ) {
-                        // make the event catching rects disappear
-                        selection.select('rect')
-                                    .attr('y', chart.height - chart.padding.y)
-                                    .attr('height', 0)
-                    }
                     if ( counter == 1 ) {
-                        chart.dispatcher.start('toggle');
+                        chart.dispatcher.start('toggle', selection, transit_out);
                     }
                 })
                 .each('end', function () {
-                    // if transitioning out
-                    if ( transit_out ) {
-                        // make sure we make the person icon disappear at the end of the transition
-                        selection.select('circle')
-                                    .attr('r', 0);
-                    }
                     if ( counter === count) {
-                        chart.dispatcher.end('toggle');
+                        chart.dispatcher.end('toggle', selection, transit_out);
                         callback && callback();
                     } else {
                         counter += 1;
