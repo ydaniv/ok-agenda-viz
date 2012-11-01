@@ -123,8 +123,53 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
                 .setColorScale();
             return this;
         },
+        createColorAxis : function () {
+            var color_axis;
+            // create the color axis
+            if ( ! this.color_grad ) {
+                this.color_grad = this.svg.select('defs').append('linearGradient')
+                    .attr('id', (this.id ? this.id + '-' : '') + 'color-axis');
+
+                color_axis = IE8_COMPAT_MODE ? this.svg : this.svg.append('g');
+
+                color_axis.append('rect')
+                    .attr('x', this.padding.x)
+                    .attr('y', this.height - this.padding.y)
+                    .attr('height', '2px')
+                    .attr('width', this.width - (2 * this.padding.x))
+                    .attr('stroke-width', '0px')
+                    .attr('fill', 'url(#' + (this.id ? this.id + '-' : '') + 'color-axis)');
+                if ( ! this.no_color_axis_images ) {
+                    // add '-' image
+                    color_axis.append('image')
+                        // image is 10x10 + 1px margin
+                        .attr('x', this.padding.x - 11)
+                        .attr('y', this.height - this.padding.y - 4)
+                        .attr('width', 10)
+                        .attr('height', 10)
+                        .attr('xlink:href', '/src/img/icons/i_minus.png');
+                    // add '+' image
+                    color_axis.append('image')
+                        // image is 10x10 + 1px margin
+                        .attr('x', this.width - this.padding.x + 1)
+                        .attr('y', this.height - this.padding.y - 4)
+                        .attr('width', 10)
+                        .attr('height', 10)
+                        .attr('xlink:href', '/src/img/icons/i_plus.png');
+                }
+            }
+            this.color_grad.selectAll('stop').remove();
+            this.color_grad.append('stop').attr('stop-color', this.color_scale(this.x_in_min)).attr('offset', '0%');
+            // if the X Domain's min and max are around the middle (0) 
+            if ( this.x_in_min < this.x_in_med && this.x_in_med < this.x_in_max ) {
+                // then add a middle color stop (to gray)
+                this.color_grad.append('stop').attr('stop-color', this.color_scale(this.x_in_med)).attr('offset', ((((this.x_in_med - this.x_in_min)/(this.x_in_max - this.x_in_min)) * 100) | 0) + '%');
+            }
+            this.color_grad.append('stop').attr('stop-color', this.color_scale(this.x_in_max)).attr('offset', '100%');
+            return this;
+        },
         createAxes      : function () {
-            var color_axis, n, dy;
+            var n, dy;
             if ( ! this.no_axes ) {
                 if ( this.x_axis ) {
                     this.x_axis.remove();
@@ -154,47 +199,7 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
                     }
                 }
 
-                // create the color axis
-                if ( ! this.color_grad ) {
-                    this.color_grad = this.svg.select('defs').append('linearGradient')
-                                                                .attr('id', (this.id ? this.id + '-' : '') + 'color-axis');
-
-                    color_axis = IE8_COMPAT_MODE ? this.svg : this.svg.append('g');
-
-                    color_axis.append('rect')
-                        .attr('x', this.padding.x)
-                        .attr('y', this.height - this.padding.y)
-                        .attr('height', '2px')
-                        .attr('width', this.width - (2 * this.padding.x))
-                        .attr('stroke-width', '0px')
-                        .attr('fill', 'url(#' + (this.id ? this.id + '-' : '') + 'color-axis)');
-                    if ( ! this.no_color_axis_images ) {
-                        // add '-' image
-                        color_axis.append('image')
-                                        // image is 10x10 + 1px margin
-                                        .attr('x', this.padding.x - 11)
-                                        .attr('y', this.height - this.padding.y - 4)
-                                        .attr('width', 10)
-                                        .attr('height', 10)
-                                        .attr('xlink:href', '/src/img/icons/i_minus.png');
-                        // add '+' image
-                        color_axis.append('image')
-                                        // image is 10x10 + 1px margin
-                                        .attr('x', this.width - this.padding.x + 1)
-                                        .attr('y', this.height - this.padding.y - 4)
-                                        .attr('width', 10)
-                                        .attr('height', 10)
-                                        .attr('xlink:href', '/src/img/icons/i_plus.png');
-                    }
-                }
-                this.color_grad.selectAll('stop').remove();
-                this.color_grad.append('stop').attr('stop-color', this.color_scale(this.x_in_min)).attr('offset', '0%');
-                // if the X Domain's min and max are around the middle (0) 
-                if ( this.x_in_min < this.x_in_med && this.x_in_med < this.x_in_max ) {
-                    // then add a middle color stop (to gray)
-                    this.color_grad.append('stop').attr('stop-color', this.color_scale(this.x_in_med)).attr('offset', ((((this.x_in_med - this.x_in_min)/(this.x_in_max - this.x_in_min)) * 100) | 0) + '%');
-                }
-                this.color_grad.append('stop').attr('stop-color', this.color_scale(this.x_in_max)).attr('offset', '100%');
+                this.createColorAxis()
             }
             return this;
         },
@@ -843,7 +848,7 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
                 },
                 parties     : {}
             };
-            this.setScales().createAxes();
+            this.setScales().createColorAxis();
 
             this.selection.all = this.svg.selectAll(this.selector)
                     .data(this.data)
@@ -888,7 +893,7 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
                 this.setXDomain(-100, 100);
             this.setRanges()
                 .setXScale()
-                .createAxes()
+                .createColorAxis()
                 // change data to new selection and redraw the selected party
                 .svg.data(this.data)
                 .selectAll(this.selector)
