@@ -51,7 +51,7 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
         };
         this.mouseout = function(d, i) {
             if ( ! that.events_disabled ) {
-                that.hideDetails(d, i, this);
+                that.hideDetails(d);
                 options.mouseout && options.mouseout.call(this, d, i);
             }
         };
@@ -129,7 +129,7 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
                     this.x_axis.remove();
                 }
                 // create X axis
-                this.x_axis = this.svg.append('line')
+                this.x_axis = this.svg.insert('line', ':first-child')
                     .attr('x1', this.x_scale(0))
                     .attr('y1', 0)
                     .attr('x2', this.x_scale(0))
@@ -314,6 +314,7 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
                 })
                 .attr('stroke-width', '4px');
             this.tooltip = Tooltip(this.svg);
+            this.persistip = Tooltip(this.svg);
             this.addEvents();
             return this;
         },
@@ -347,7 +348,6 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
             }
         },
         zoom        : function (is_in) {
-            //TODO: add transition to scale change
             var chart = this,
                 count = this.selection.all.length, counter = 1;
             // if `is_in` is not specified then toggle state
@@ -485,9 +485,11 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
                 .attr('points', chart.member_torso)
                 .attr('fill', function(d) {
                     return chart.color_scale(d[0]);
-                }).attr('transform', function (d) {
+                })
+                .attr('transform', function (d) {
                     return 'translate(0,' + (complete ? chart.y_scale(d[1]) : chart.height) + ')';
-                });
+                })
+                .style('visibility', complete ? 'visible' : 'hidden');
             selection.append('circle')
                 .attr('cx', 4)
                 .attr('cy', ! complete ? chart.height - chart.padding.y : function(d) {
@@ -523,17 +525,21 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
             var chart = this;
 
             this.selection = {
-                all     : null,
-                getParty: function (id) {
+                all         : null,
+                getParty    : function (id) {
                     if ( !(id in this.parties) ) {
-                        //# Array.prototype.filter
                         this.parties[id] = this.all.filter(function (d, i) {
                             return d[5] === id;
                         });
                     }
                     return this.parties[id];
                 },
-                parties : {}
+                getMember   : function (id) {
+                    return this.all.filter(function (d) {
+                        return d[8] === id;
+                    });
+                },
+                parties     : {}
             };
             this.setScales()
                 .createAxes();
@@ -548,7 +554,35 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
                 this.parties_toggle[0] = true;
                 this.select();
             }
+
+            this.dispatcher.on('start', function (type, selection, out) {
+                if ( type === 'toggle' ) {
+                    if ( out ) {
+                        // make the event catching rects disappear
+                        selection.select('rect')
+                            .attr('y', chart.height - chart.padding.y)
+                            .attr('height', 0);
+                    }
+                    else {
+                        selection.select('circle')
+                            .attr('r', chart.bar_width / 2);
+                        selection.select('polygon')
+                            .style('visibility', 'visible');
+                    }
+                }
+            });
+            this.dispatcher.on('end', function (type, selection, out) {
+                if ( type === 'toggle' && out ) {
+                    // make sure we make the person icon disappear at the end of the transition
+                    selection.select('circle')
+                        .attr('r', 0);
+                    selection.select('polygon')
+                        .style('visibility', 'hidden');
+                }
+            });
+
             this.tooltip = Tooltip(this.svg);
+            this.persistip = Tooltip(this.svg);
             this.addEvents();
             return this;
         },
@@ -633,25 +667,13 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
                 return chart.y_scale(d[1]);
             })
                 .each('start', function () {
-                    if ( transit_out ) {
-                        // make the event catching rects disappear
-                        selection.select('rect')
-                            .attr('y', chart.height - chart.padding.y)
-                            .attr('height', 0)
-                    }
                     if ( counter == 1 ) {
-                        chart.dispatcher.start('toggle');
+                        chart.dispatcher.start('toggle', selection, transit_out);
                     }
                 })
                 .each('end', function () {
-                    // if transitioning out
-                    if ( transit_out ) {
-                        // make sure we make the person icon disappear at the end of the transition
-                        selection.select('circle')
-                            .attr('r', 0);
-                    }
                     if ( counter === count) {
-                        chart.dispatcher.end('toggle');
+                        chart.dispatcher.end('toggle', selection, transit_out);
                         callback && callback();
                     } else {
                         counter += 1;
@@ -679,6 +701,10 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
                     .attr('height', function (d) {
                         return chart.height - chart.padding.y - chart.y_scale(d[1])
                     });
+            }
+            if ( ! count ) {
+                chart.dispatcher.start('toggle', selection, transit_out);
+                chart.dispatcher.end('toggle', selection, transit_out);
             }
         },
         zoom            : function (is_in, immediate) {
@@ -720,7 +746,7 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
                     var x = d[0],
                         x_out = chart.x_scale(x);
                     if ( chart.focused_member === d[8] ) {
-                        chart.tooltip.updatePosition(x_out, chart.y_scale(d[1]));
+                        chart.persistip.updatePosition(x_out, d3.select(this).select('circle').attr('cy'));
                     }
                     return 'translate(' + (x === chart.x_in_max ? x_out - chart.bar_width : x_out) + ',0)'
                 });
@@ -740,16 +766,20 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
             }
             return this;
         },
-        showDetails     : function (data, element) {
+        showDetails     : function (data, element, is_persist) {
+            if ( this.focused_member === data[8] && ! is_persist ) { return; }
             var content = data[3],
                 x = +element.attr('transform').split('(')[1].split(',')[0] + this.bar_width / 2,
                 y = element.select('circle').attr('cy');
-            return this.tooltip.showTooltip(content, this.color_scale(data[0]), x | 0, y | 0, data[6]);
+            (is_persist ? this.persistip : this.tooltip).showTooltip(content, this.color_scale(data[0]), x | 0, y | 0, data[6]);
+            return this;
         },
-        hideDetails     : function (d, i, el) {
-            if ( ! d || this.focused_member !== d[8] ) {
-                return this.tooltip.hideTooltip();
+        hideDetails     : function (d, both) {
+            if ( ! d || this.focused_member !== d[8] && both ) {
+                this.persistip.hideTooltip();
             }
+            this.tooltip.hideTooltip();
+            return this;
         }
     });
 

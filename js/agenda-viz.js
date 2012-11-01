@@ -89,7 +89,7 @@ define(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When) {
     // when.js also wraps the resolved and rejected calls in `try-catch` statements
     When.all(
         [Parties.get('http://oknesset.org/api/v2/party/?callback=?'),
-            Agenda.get('http://oknesset.org/api/v2/agenda/' + agenda_id + '/?callback=?', true),
+            Agenda.get('http://oknesset.org/api/v2/agenda/' + agenda_id + '/?callback=?', false),
             Members.get('http://oknesset.org/api/v2/member/?callback=?')],
         function (responses) {
             var parties = responses[0],
@@ -182,12 +182,11 @@ define(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When) {
                     }
                 }),
                 selectMemberHandler = function (member, el) {
-                    var member_id = member[8];
+                    var member_id = member[8], _member, last_member;
                     if ( ! el ) {
-                        members_chart.selection.all.each(function (d) {
-                            if ( d[8] === member_id ) el = this;
-                        });
+                        el = members_chart.selection.getMember(member_id).node();
                     }
+                    _member = d3.select(el);
                     // if this is a second selection on the focuesd member
                     if ( members_chart.focused_member === member_id ) {
                         // open the link to the member
@@ -197,23 +196,37 @@ define(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When) {
                     else {
                         // if there's a previous focused member
                         if ( members_chart.focused_member ) {
-                            // hide its tooltip
-                            members_chart.hideDetails(member);
+                            // hide tooltips
+                            members_chart.hideDetails(member, true);
+                            last_member = members_chart.selection.getMember(members_chart.focused_member);
+                            last_member.select('image').remove();
+                            last_member.select('circle').attr('r', members_chart.bar_width / 2);
                         }
                         // set the hash to this member's id
                         dispatcher.change_hash('member_' + member_id);
                         // set the current focused member
                         members_chart.focused_member = member[8];
                         // show this member's tooltip
-                        members_chart.showDetails(member, d3.select(el));
+                        members_chart.showDetails(member, d3.select(el), true);
+                        // change its circle to the link icon
+                        _member.append('image')
+                            .attr('x', -2)
+                            .attr('y', _member.select('circle').attr('r', 0).attr('cy') - 8)
+                            .attr('width', 14)
+                            .attr('height', 14)
+                            .attr('xlink:href', 'img/icons/i_link.png');
                     }
                 },
                 clearMemberSelection = function () {
+                    var last_member = members_chart.selection.getMember(members_chart.focused_member);
                     if ( /member_\d+/.test(window.location.hash) ) {
                         dispatcher.change_hash('');
                     }
+                    last_member.select('image').remove();
+                    last_member.select('circle').attr('r', members_chart.bar_width / 2);
                     members_chart.focused_member = 0;
-                    members_chart.hideDetails();
+                    // hide both tooltips
+                    members_chart.hideDetails(last_member.data(), true);
                 },
                 parties_view = ! initial_member;
 
@@ -222,13 +235,19 @@ define(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When) {
                     zoom_out = function () {
                         members_chart.zoom(parties_chart.zoom_in ? 'all' : false, true);
                     };
+                // clear focused member
                 clearMemberSelection();
+                // loop over all parties
                 parties_chart.selection.all.each(function (d) {
                     var id = d[4];
+                    // if party is toggled on and different from selected party
                     if ( party_id != id && members_chart.parties_toggle[id] ) {
+                        // hide its members
                         members_chart.hide(id, true, is_all && zoom_out);
                     }
+                    // if it's the selected party
                     if ( party_id == id ) {
+                        // show it and zoom in
                         members_chart.show(id, true);
                         members_chart.zoom(true);
                     }
@@ -334,9 +353,7 @@ define(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When) {
                 parties_menu.property('value', member.party_id);
                 //# Array.prototype.filter
                 members_chart.show(member.party_id, true, function () {
-                    selectMemberHandler(members_chart.selection.all.filter(function (d) {
-                        return d[8] === initial_member;
-                    }).data()[0]);
+                    selectMemberHandler(members_chart.selection.getMember(initial_member).data()[0]);
                 });
                 members_chart.zoom(true, true);
                 parties_chart.toggleEvents(false);
