@@ -672,10 +672,19 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
                     }
                 })
                 .each('end', function () {
+                    var member;
                     if ( counter === count) {
                         chart.dispatcher.end('toggle', selection, transit_out);
                         callback && callback();
                     } else {
+                        if ( transit_out ) {
+                            member = d3.select(this.parentNode);
+                            // make sure we make the person icon disappear at the end of the transition
+                            member.select('circle')
+                                .attr('r', 0);
+                            member.select('polygon')
+                                .style('visibility', 'hidden');
+                        }
                         counter += 1;
                     }
                 });
