@@ -769,7 +769,7 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
         showDetails     : function (data, element, is_persist) {
             if ( this.focused_member === data[8] && ! is_persist ) { return; }
             var content = data[3],
-                x = +element.attr('transform').split('(')[1].split(',')[0] + this.bar_width / 2,
+                x = +element.attr('transform').split('(')[1].split(',')[0].replace(/[^\d\.]/g, '') + this.bar_width / 2,
                 y = element.select('circle').attr('cy');
             (is_persist ? this.persistip : this.tooltip).showTooltip(content, this.color_scale(data[0]), x | 0, y | 0, data[6]);
             return this;

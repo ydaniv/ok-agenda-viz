@@ -89,7 +89,7 @@ define(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When) {
     // when.js also wraps the resolved and rejected calls in `try-catch` statements
     When.all(
         [Parties.get('http://oknesset.org/api/v2/party/?callback=?'),
-            Agenda.get('http://oknesset.org/api/v2/agenda/' + agenda_id + '/?callback=?', false),
+            Agenda.get('http://oknesset.org/api/v2/agenda/' + agenda_id + '/?callback=?', true),
             Members.get('http://oknesset.org/api/v2/member/?callback=?')],
         function (responses) {
             var parties = responses[0],
@@ -262,10 +262,13 @@ define(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When) {
                 dispatcher.change_hash(is_all ? '' : 'party_' + party_id);
             });
             dispatcher.on('change_hash', function (hash) {
+                var match = embed_snippet.match(/src="[^#]+(#?.*)"/);
                 window.location.hash = hash ? '#' + hash : '';
-                embed_snippet = embed_snippet.replace(/src="[^#]+#?(.*)"/, function (match, old_hash) {
-                    return old_hash ? match.replace(old_hash, hash) : match + (~ match.indexOf('#') ? hash : '#' + hash);
-                });
+                if ( match && match.length > 1 ) {
+                    embed_snippet = !!match[1] ?
+                        embed_snippet.replace(match[1], '#' + hash) :
+                        embed_snippet.replace(match[0], match[0] + '#' + hash);
+                }
                 d3.select('#embed-snippet').property('value', embed_snippet);
             });
             // IE can't set innerHTML of select, need to use the .options.add interface
