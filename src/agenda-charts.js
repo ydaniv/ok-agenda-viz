@@ -348,7 +348,6 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
             }
         },
         zoom        : function (is_in) {
-            //TODO: add transition to scale change
             var chart = this,
                 count = this.selection.all.length, counter = 1;
             // if `is_in` is not specified then toggle state
