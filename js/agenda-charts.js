@@ -64,6 +64,7 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
             .attr('height', this.height);
         if ( options.id ) {
             this.svg.attr('id', options.id);
+            this.id = options.id;
         }
     }
 
@@ -156,7 +157,7 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
                 // create the color axis
                 if ( ! this.color_grad ) {
                     this.color_grad = this.svg.select('defs').append('linearGradient')
-                        .attr('id', 'color-axis');
+                        .attr('id', (this.id ? this.id + '-' : '') + 'color-axis');
 
                     color_axis = IE8_COMPAT_MODE ? this.svg : this.svg.append('g');
 
@@ -166,23 +167,25 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
                         .attr('height', '2px')
                         .attr('width', this.width - (2 * this.padding.x))
                         .attr('stroke-width', '0px')
-                        .attr('fill', 'url(#color-axis)');
-                    // add '-' image
-                    color_axis.append('image')
-                        // image is 10x10 + 1px margin
-                        .attr('x', this.padding.x - 11)
-                        .attr('y', this.height - this.padding.y - 4)
-                        .attr('width', 10)
-                        .attr('height', 10)
-                        .attr('xlink:href', 'img/icons/i_minus.png');
-                    // add '+' image
-                    color_axis.append('image')
-                        // image is 10x10 + 1px margin
-                        .attr('x', this.width - this.padding.x + 1)
-                        .attr('y', this.height - this.padding.y - 4)
-                        .attr('width', 10)
-                        .attr('height', 10)
-                        .attr('xlink:href', 'img/icons/i_plus.png');
+                        .attr('fill', 'url(#' + (this.id ? this.id + '-' : '') + 'color-axis)');
+                    if ( ! this.no_color_axis_images ) {
+                        // add '-' image
+                        color_axis.append('image')
+                            // image is 10x10 + 1px margin
+                            .attr('x', this.padding.x - 11)
+                            .attr('y', this.height - this.padding.y - 4)
+                            .attr('width', 10)
+                            .attr('height', 10)
+                            .attr('xlink:href', 'img/icons/i_minus.png');
+                        // add '+' image
+                        color_axis.append('image')
+                            // image is 10x10 + 1px margin
+                            .attr('x', this.width - this.padding.x + 1)
+                            .attr('y', this.height - this.padding.y - 4)
+                            .attr('width', 10)
+                            .attr('height', 10)
+                            .attr('xlink:href', 'img/icons/i_plus.png');
+                    }
                 }
                 this.color_grad.selectAll('stop').remove();
                 this.color_grad.append('stop').attr('stop-color', this.color_scale(this.x_in_min)).attr('offset', '0%');
@@ -400,7 +403,6 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
         var _self = this;
         Chart.call(this, options);
         this.bar_width = options.bar_width || 8;
-        this.bar_padding = options.bar_padding || 1;
         this.stroke = options.stroke || 0;
         this.element = 'g';
         this.selector = '.member';
@@ -792,8 +794,119 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
         }
     });
 
+    function ButtonChart (options) {
+        var _self = this;
+        Chart.call(this, options);
+        this.bar_width = options.bar_width || 1;
+        this.stroke = options.stroke || 0;
+        this.element = 'rect';
+        this.selector = '.mini-member';
+        this.parties_toggle = {};
+        this.no_color_axis_images = true;
+
+        this.svg.append('defs');
+    }
+
+    ButtonChart.prototype = extend(Object.create(MembersChart.prototype), {
+        constructor : ButtonChart,
+        renderElement   : function (selection, chart) {
+            selection.attr('class', chart.selector.slice(1))
+                .attr('x', function(d) {
+                    return chart.x_scale(d[0]);
+                })
+                .attr('y', function(d) {
+                    return chart.y_scale(d[1]);
+                })
+                .attr('width', chart.bar_width)
+                .attr('height', function (d) {
+                    return chart.height - chart.padding.y - chart.y_scale(d[1]);
+                })
+                .attr('fill', function(d) {
+                    return chart.color_scale(d[0]);
+                });
+        },
+        render          : function (complete) {
+            this.selection = {
+                all         : null,
+                getParty    : function (id) {
+                    if ( !(id in this.parties) ) {
+                        this.parties[id] = this.all.filter(function (d, i) {
+                            return d[5] === id;
+                        });
+                    }
+                    return this.parties[id];
+                },
+                getMember   : function (id) {
+                    return this.all.filter(function (d) {
+                        return d[8] === id;
+                    });
+                },
+                parties     : {}
+            };
+            this.setScales().createAxes();
+
+            this.selection.all = this.svg.selectAll(this.selector)
+                .data(this.data)
+                .enter()
+                // add the member's rectangle
+                .append(this.element)
+                .call(this.renderElement, this, complete);
+
+            return this;
+        },
+        transition      : function (selection, chart, transit_out) {
+            selection.attr('y', transit_out ? chart.height - chart.padding.y : function (d) {
+                return chart.y_scale(d[1]);
+            })
+                .attr('height', transit_out ? 0 : function (d) {
+                return chart.height - chart.padding.y - chart.y_scale(d[1]);
+            });
+        },
+        zoom            : function (is_in, immediate) {
+            var chart = this,
+                getScore = prop(0),
+                selection, scope, count;
+            // if `is_in` is not specified then toggle state
+            if ( ! arguments.length ) {
+                is_in = ! this.zoom_in;
+            }
+            else if ( typeof is_in == 'string' ) {
+                scope = is_in;
+                is_in = true;
+            }
+            // set state
+            this.zoom_in = is_in;
+            // set data according to scope
+            if ( is_in && scope !== 'all' ) {
+                this.data = this.selection.current.data();
+            }
+            else {
+                this.data = this.selection.all.data();
+            }
+            is_in ?
+                this.setXDomain(d3.min(this.data, getScore), d3.max(this.data, getScore)) :
+                this.setXDomain(-100, 100);
+            this.setRanges()
+                .setXScale()
+                .createAxes()
+                // change data to new selection and redraw the selected party
+                .svg.data(this.data)
+                .selectAll(this.selector)
+                .attr('x', function (d) {
+                    var x = d[0],
+                        x_out = chart.x_scale(x);
+                    return x_out === chart.x_out_max ? x_out - chart.bar_width : x_out;
+                })
+                .attr('fill', function (d) {
+                    return chart.color_scale(d[0]);
+                });
+            return this;
+        }
+    });
+
     return {
         PartiesChart: PartiesChart,
-        MembersChart: MembersChart
+        MembersChart: MembersChart,
+        ButtonChart : ButtonChart
     };
 });

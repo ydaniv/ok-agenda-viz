@@ -123,12 +123,6 @@ div, h1, h2, p {
     border-radius: 10px;
     outline: none;
 }
-#controls button:hover {
-    background-color: #009d9d;
-}
-#controls button:active {
-    background-color: teal;
-}
 #headings {
     float: right;
 }
@@ -174,7 +168,11 @@ div, h1, h2, p {
     font-weight: normal;
 }
 #toggle-zoom {
+    position: relative;
     float: left;
+    width: 80px;
+    height: 22px;
+    padding: 0;
 }
 #header {
     height: 65px;
@@ -250,7 +248,7 @@ div, h1, h2, p {
             <select id="knesset-menu" name="knesset">
                 <option value="18">הכנסת ה - 18</option>
             </select>
-            <button id="toggle-zoom" name="zoom">שנה מיקוד</button>
+            <button id="toggle-zoom" name="zoom"></button>
         </div>
     </div>
     <div id="charts">

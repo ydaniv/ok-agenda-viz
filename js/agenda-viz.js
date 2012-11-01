@@ -248,10 +248,19 @@ define(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When) {
                     // if it's the selected party
                     if ( party_id == id ) {
                         // show it and zoom in
-                        members_chart.show(id, true);
-                        members_chart.zoom(true);
+                        members_chart.show(id, true).zoom(true);
+                        button_chart.show(id, true).zoom(false);
+                    }
+                    else {
+                        if ( ! is_all ) {
+                            button_chart.hide(id, true);
+                        }
                     }
                 });
+                if ( is_all ) {
+                    button_chart.select().call(button_chart.transition, button_chart);
+                    button_chart.zoom( ! parties_chart.zoom_in ? 'all' : false);
+                }
                 // toggle view state
                 parties_view = is_all;
                 // toggle all parties
@@ -304,9 +313,11 @@ define(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When) {
                 if ( parties_view ) {
                     parties_chart.zoom();
                     members_chart.zoom(parties_chart.zoom_in ? 'all' : false);
+                    button_chart.zoom( ! parties_chart.zoom_in ? 'all' : false);
                 }
                 else {
                     members_chart.zoom();
+                    button_chart.zoom();
                 }
             });
 
@@ -350,7 +361,19 @@ define(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When) {
                 })[0];
             }
 
+            // draw the button chart
+            var button_chart = new Charts.ButtonChart({
+                data        : members_data,
+                container   : '#toggle-zoom',
+                id          : 'zoom-button-canvas',
+                padding     : {
+                    x   : 10,
+                    y   : 5
+                }
+            }).render();
+
             if ( member ) {
+                parties_view = false;
                 parties_chart.render();
                 members_chart.render();
                 parties_menu.property('value', member.party_id);
@@ -360,15 +383,24 @@ define(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When) {
                 });
                 members_chart.zoom(true, true);
                 parties_chart.toggleEvents(false);
+                // set zoom button state
+                button_chart.select().call(button_chart.transition, button_chart, true);
+                button_chart.show(member.party_id, true).zoom(false);
             } else if ( initial_party ) {
+                parties_view = false;
                 parties_chart.render();
                 members_chart.render();
                 parties_menu.property('value', initial_party);
                 members_chart.show(initial_party, true);
                 parties_chart.toggleEvents(false);
+                // set zoom button state
+                button_chart.select().call(button_chart.transition, button_chart, true);
+                button_chart.show(initial_party, true).zoom(true);
             } else {
+                parties_view = true;
                 parties_chart.draw();
                 members_chart.render();
+                button_chart.zoom('all');
             }
             // after parties chart was initialised with default X scale domain,
             // set it's X domain to the min/max of members' scores
