@@ -89,7 +89,7 @@ define(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When) {
     // when.js also wraps the resolved and rejected calls in `try-catch` statements
     When.all(
         [Parties.get('http://oknesset.org/api/v2/party/?callback=?'),
-            Agenda.get('http://oknesset.org/api/v2/agenda/' + agenda_id + '/?callback=?', false),
+            Agenda.get('http://oknesset.org/api/v2/agenda/' + agenda_id + '/?callback=?', true),
             Members.get('http://oknesset.org/api/v2/member/?callback=?')],
         function (responses) {
             var parties = responses[0],
