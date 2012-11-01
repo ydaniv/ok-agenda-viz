@@ -741,7 +741,7 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
                         var x = d[0],
                             x_out = chart.x_scale(x);
                         if ( chart.focused_member === d[8] ) {
-                            chart.persistip.updatePosition(x_out, chart.y_scale(d[1]) - chart.bar_width);
+                            chart.persistip.updatePosition(x_out, d3.select(this).select('circle').attr('cy'));
                         }
                         return 'translate(' + (x === chart.x_in_max ? x_out - chart.bar_width : x_out) + ',0)'
                     });
