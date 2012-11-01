@@ -697,6 +697,10 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
                                 return chart.height - chart.padding.y - chart.y_scale(d[1])
                             });
             }
+            if ( ! count ) {
+                chart.dispatcher.start('toggle', selection, transit_out);
+                chart.dispatcher.end('toggle', selection, transit_out);
+            }
         },
         zoom            : function (is_in, immediate) {
             var chart = this,
