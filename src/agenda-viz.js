@@ -97,13 +97,13 @@ define(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When) {
                 members = responses[2],
                 parties_menu = d3.select('#parties-menu'),
                 toggle_zoom = d3.select('#toggle-zoom'),
-            //# Array.prototype.map
+                //# Array.prototype.map
                 parties_data = agenda.parties.map(function (item, i) {
                     item.size = parties.objects[i].number_of_seats;
                     item.id = parties.objects[i].id;
                     return item;
                 }),
-            //# Array.prototype.forEach
+                //# Array.prototype.forEach
                 members_data = (agenda.parties.forEach(function (party) {
                     //# Array.prototype.forEach
                     agenda.members.forEach(function (member, i) {
@@ -196,8 +196,8 @@ define(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When) {
                     else {
                         // if there's a previous focused member
                         if ( members_chart.focused_member ) {
-                            // hide its tooltip
-                            members_chart.hideDetails(member);
+                            // hide tooltips
+                            members_chart.hideDetails(member, true);
                             last_member = members_chart.selection.getMember(members_chart.focused_member);
                             last_member.select('image').remove();
                             last_member.select('circle').attr('r', members_chart.bar_width / 2);
@@ -207,7 +207,7 @@ define(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When) {
                         // set the current focused member
                         members_chart.focused_member = member[8];
                         // show this member's tooltip
-                        members_chart.showDetails(member, d3.select(el));
+                        members_chart.showDetails(member, d3.select(el), true);
                         // change its circle to the link icon
                         _member.append('image')
                             .attr('x', -2)
@@ -225,7 +225,8 @@ define(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When) {
                     last_member.select('image').remove();
                     last_member.select('circle').attr('r', members_chart.bar_width / 2);
                     members_chart.focused_member = 0;
-                    members_chart.hideDetails(last_member.data());
+                    // hide both tooltips
+                    members_chart.hideDetails(last_member.data(), true);
                 },
                 parties_view = ! initial_member;
 
@@ -234,13 +235,19 @@ define(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When) {
                     zoom_out = function () {
                         members_chart.zoom(parties_chart.zoom_in ? 'all' : false, true);
                     };
+                // clear focused member
                 clearMemberSelection();
+                // loop over all parties
                 parties_chart.selection.all.each(function (d) {
                     var id = d[4];
+                    // if party is toggled on and different from selected party
                     if ( party_id != id && members_chart.parties_toggle[id] ) {
+                        // hide its members
                         members_chart.hide(id, true, is_all && zoom_out);
                     }
+                    // if it's the selected party
                     if ( party_id == id ) {
+                        // show it and zoom in
                         members_chart.show(id, true);
                         members_chart.zoom(true);
                     }

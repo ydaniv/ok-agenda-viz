@@ -51,7 +51,7 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
         };
         this.mouseout = function(d, i) {
             if ( ! that.events_disabled ) {
-                that.hideDetails(d, i, this);
+                that.hideDetails(d);
                 options.mouseout && options.mouseout.call(this, d, i);
             }
         };
@@ -314,6 +314,7 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
                 })
                 .attr('stroke-width', '4px');
             this.tooltip = Tooltip(this.svg);
+            this.persistip = Tooltip(this.svg);
             this.addEvents();
             return this;
         },
@@ -553,6 +554,7 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
                 this.select();
             }
             this.tooltip = Tooltip(this.svg);
+            this.persistip = Tooltip(this.svg);
             this.addEvents();
             return this;
         },
@@ -724,7 +726,7 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
                         var x = d[0],
                             x_out = chart.x_scale(x);
                         if ( chart.focused_member === d[8] ) {
-                            chart.tooltip.updatePosition(x_out, chart.y_scale(d[1]) - chart.bar_width);
+                            chart.persistip.updatePosition(x_out, chart.y_scale(d[1]) - chart.bar_width);
                         }
                         return 'translate(' + (x === chart.x_in_max ? x_out - chart.bar_width : x_out) + ',0)'
                     });
@@ -744,16 +746,20 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
             }
             return this;
         },
-        showDetails     : function (data, element) {
+        showDetails     : function (data, element, is_persist) {
+            if ( this.focused_member === data[8] && ! is_persist ) { return; }
             var content = data[3],
                 x = +element.attr('transform').split('(')[1].split(',')[0] + this.bar_width / 2,
                 y = element.select('circle').attr('cy');
-            return this.tooltip.showTooltip(content, this.color_scale(data[0]), x | 0, y | 0, data[6]);
+            (is_persist ? this.persistip : this.tooltip).showTooltip(content, this.color_scale(data[0]), x | 0, y | 0, data[6]);
+            return this;
         },
-        hideDetails     : function (d, i, el) {
-            if ( ! d || this.focused_member !== d[8] ) {
-                return this.tooltip.hideTooltip();
+        hideDetails     : function (d, both) {
+            if ( ! d || this.focused_member !== d[8] && both ) {
+                this.persistip.hideTooltip();
             }
+            this.tooltip.hideTooltip();
+            return this;
         }
     });
 
