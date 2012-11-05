@@ -373,10 +373,22 @@ define(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When) {
             });
             d3.select('#tweeter').attr('data-text', agenda.name + ' בעריכת ' + agenda.public_owner_name);
             d3.select('#exit-button').on('click', function () {
-                dispatcher.change_party(0);
+                if ( share_ovelay_on ) {
+                    shareHandler();
+                }
+                else if ( embed_ovelay_on ) {
+                    embedHandler();
+                }
+                else {
+                    return dispatcher.change_party(0);
+                }
+                toggleExitButtonHandler();
             });
 
             var toggleExitButtonHandler = function (toggle) {
+                // if it's toggled off and we're still members view state
+                if ( ! toggle && ! parties_view ) return;
+
                 d3.select('#exit-button')
                     .transition().duration(300)
                         .style('height', toggle ? '60px' : '0px')
@@ -414,6 +426,7 @@ define(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When) {
                 }
                 embed_ovelay_on = !embed_ovelay_on;
                 embed_overlay.transition().duration(300).style('height', h);
+                toggleExitButtonHandler(true);
             };
             var shareHandler = function () {
                 var h = share_ovelay_on ? '0%' : '100%';
@@ -423,6 +436,7 @@ define(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When) {
                 }
                 share_ovelay_on = ! share_ovelay_on;
                 share_overlay.transition().duration(300).style('height', h);
+                toggleExitButtonHandler(true);
             };
             d3.select('#embed-link').on('click', embedHandler);
             d3.select('#share-link').on('click', shareHandler);

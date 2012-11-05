@@ -33,6 +33,19 @@
             width: 10px;
             height: 10px;
         }
+        .exit-ribbon {
+            display: block;
+            position: absolute;
+            right: 10px;
+            /*bottom: -59px;*/
+            bottom: -1px;
+            z-index: 1001;
+            width: 26px;
+            /*height: 60px;*/
+            height: 0;
+            background: #09f url('/src/img/icons/agenda-embed-X.png') center 40px no-repeat;
+            cursor: pointer;
+        }
         .hide {
             display: none;
         }
@@ -187,19 +200,6 @@
             padding: 5px;
             border-bottom: 1px dashed #65BAF7;
         }
-        #exit-button {
-            display: block;
-            position: absolute;
-            right: 10px;
-            /*bottom: -59px;*/
-            bottom: -1px;
-            z-index: 100;
-            width: 26px;
-            /*height: 60px;*/
-            height: 0;
-            background: #09f url('/src/img/icons/agenda-embed-X.png') center 40px no-repeat;
-            cursor: pointer;
-        }
         #footer {
             position: absolute;
             bottom: 0;
@@ -285,7 +285,7 @@
                 </select>
                 <span id="toggle-zoom" name="zoom"></span>
             </div>
-            <span id="exit-button"></span>
+            <span id="exit-button" class="exit-ribbon"></span>
         </div>
         <div id="charts">
             <div id="share-overlay" class="overlay">
