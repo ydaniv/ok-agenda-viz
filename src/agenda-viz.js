@@ -507,6 +507,8 @@ define(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When) {
                 data        : members_data,
                 container   : '#toggle-zoom',
                 id          : 'zoom-button-canvas',
+                width       : 80,
+                height      : 22,
                 padding     : {
                     x   : 10,
                     y   : 5
