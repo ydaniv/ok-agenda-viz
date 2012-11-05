@@ -170,6 +170,22 @@ define(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When) {
                     data        : members_data,
                     container   : '#charts',
                     id          : 'members-canvas',
+                    mouseover   : function (member) {
+                        var _self = this,
+                            min_x = (member[0] | 0) - 1,
+                            max_x = (member[0] | 0) + 1;
+                        members_chart.selection.current.each(function (d) {
+                            if ( _self !== this && d[0] < max_x && d[0] > min_x ) {
+                                d3.select(this).select('line').attr('stroke-width', 0);
+                            }
+                        });
+                    },
+                    mouseout    : function (member) {
+                        members_chart.selection.current.each(function (d) {
+                            d3.select(this)
+                                .select('line').attr('stroke-width', members_chart.bar_width);
+                        });
+                    },
                     click       : function (member) {
                         if ( ! members_touches ) {
                             selectMemberHandler(member, this);
@@ -203,7 +219,7 @@ define(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When) {
                             last_member.select('circle').attr('r', members_chart.bar_width / 2);
                         }
                         // set the hash to this member's id
-                        dispatcher.change_hash('member_' + member_id);
+                        dispatcher.change_hash(member_id, true);
                         // set the current focused member
                         members_chart.focused_member = member[8];
                         // show this member's tooltip
@@ -235,8 +251,11 @@ define(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When) {
                     zoom_out = function () {
                         members_chart.zoom(parties_chart.zoom_in ? 'all' : false, true);
                     };
+                // toggle view state
+                parties_view = is_all;
                 // clear focused member
                 clearMemberSelection();
+
                 // loop over all parties
                 parties_chart.selection.all.each(function (d) {
                     var id = d[4];
@@ -257,28 +276,41 @@ define(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When) {
                         }
                     }
                 });
+                // re-render members according to view state
+//                (is_all ? members_chart.background : members_chart.foreground).call(members_chart);
                 if ( is_all ) {
                     button_chart.select().call(button_chart.transition, button_chart);
                     button_chart.zoom( ! parties_chart.zoom_in ? 'all' : false);
                 }
-                // toggle view state
-                parties_view = is_all;
                 // toggle all parties
                 parties_chart.selection.all.call(parties_chart.transition, parties_chart, !is_all);
                 // toggle the transparency of the parties chart to events, to enable those on the members chart that's underneath it
                 parties_chart.toggleEvents(is_all);
+
+                // toggle the 'back-to-parties' ribbon
+                toggleExitButtonHandler(!is_all);
                 // clear party selection if needed
-                dispatcher.change_hash(is_all ? '' : 'party_' + party_id);
+                dispatcher.change_hash(is_all ? '' : party_id, false);
             });
-            dispatcher.on('change_hash', function (hash) {
-                var match = embed_snippet.match(/src="[^#]+(#?.*)"/);
-                window.location.hash = hash ? '#' + hash : '';
+            dispatcher.on('change_hash', function (hash, is_member) {
+                var match = embed_snippet.match(/src="[^#]+(#?.*)"/),
+                    id = is_member && hash,
+                    share_url;
+                hash = hash ?
+                    is_member ?
+                        '#member_' + hash :
+                        '#party_' + hash :
+                    '';
+                share_url = BASE_URL + agenda.absolute_url + (hash && is_member ? 'member/' + id + '/' : '');
+                window.location.hash = hash;
                 if ( match && match.length > 1 ) {
                     embed_snippet = !!match[1] ?
-                        embed_snippet.replace(match[1], '#' + hash) :
-                        embed_snippet.replace(match[0], match[0] + '#' + hash);
+                        embed_snippet.replace(match[1], hash) :
+                        embed_snippet.replace(match[0], match[0] + hash);
                 }
                 d3.select('#embed-snippet').property('value', embed_snippet);
+                d3.select('#share-snippet').property('value', share_url);
+
             });
             // IE can't set innerHTML of select, need to use the .options.add interface
             if ( typeof parties_menu[0][0].options.add == 'function' ) {
@@ -331,9 +363,62 @@ define(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When) {
                 .attr('href', BASE_URL + agenda.absolute_url);
             d3.select('#number-of-votes').text(agenda.votes.length);
             d3.select('#loader').transition().delay(200).duration(400).style('top', '100%').style('opacity', 0);
-            d3.select('#embed-snippet').property('value', embed_snippet).on('click', function () { this.select(); });
-            d3.select('#share-snippet').property('value', BASE_URL + agenda.absolute_url).on('click', function () { this.select(); });
+            d3.select('#embed-snippet').property('value', embed_snippet).on('click', function () {
+                d3.event.stopPropagation();
+                this.select();
+            });
+            d3.select('#share-snippet').property('value', BASE_URL + agenda.absolute_url).on('click', function () {
+                d3.event.stopPropagation();
+                this.select();
+            });
+            d3.select('#tweeter').attr('data-text', agenda.name + ' בעריכת ' + agenda.public_owner_name);
+            d3.select('#exit-button').on('click', function () {
+                if ( share_ovelay_on ) {
+                    shareHandler();
+                }
+                else if ( embed_ovelay_on ) {
+                    embedHandler();
+                }
+                else {
+                    return dispatcher.change_party(0);
+                }
+                toggleExitButtonHandler();
+            });
 
+            var toggleExitButtonHandler = function (toggle) {
+                // if it's toggled off and we're still members view state
+                if ( ! toggle && ! parties_view ) return;
+
+                d3.select('#exit-button')
+                    .transition().duration(300)
+                    .style('height', toggle ? '60px' : '0px')
+                    .style('bottom', toggle ? '-59px' : '-1px');
+            };
+            var tweeterHandler = function () {
+                // create a new dynamic tweeter
+                var share_url = d3.select('#share-snippet').property('value'),
+                    tweeter = d3.select('#tweeter').node().cloneNode(),
+                    script_id = 'twitter-widgets',
+                    current_script = document.getElementById(script_id),
+                    script;
+                d3.select(tweeter)
+                    .attr('id', 'tweeter-clone')
+                    .attr('data-url', share_url)
+                    .classed('twitter-share-button', true)
+                    .classed('hide', false);
+                // remove old tweeters
+                share_overlay.selectAll('.twitter-share-button').remove();
+                // append the new one
+                share_overlay.select('.overlay-message').node().appendChild(tweeter);
+                // re-get the twitter widgets script
+                script = document.createElement('script');
+                current_script && document.head.removeChild(current_script);
+                script.src = 'http://platform.twitter.com/widgets.js';
+                script.id = script_id;
+                script.async = true;
+//                script.setAttribute('data-time', Date.now());
+                document.head.appendChild(script);
+            };
             var embedHandler = function () {
                 var h = embed_ovelay_on ? '0%' : '100%';
                 if ( share_ovelay_on ) {
@@ -341,17 +426,22 @@ define(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When) {
                 }
                 embed_ovelay_on = !embed_ovelay_on;
                 embed_overlay.transition().duration(300).style('height', h);
+                toggleExitButtonHandler(true);
             };
             var shareHandler = function () {
                 var h = share_ovelay_on ? '0%' : '100%';
+                share_ovelay_on || tweeterHandler();
                 if ( embed_ovelay_on ) {
                     embedHandler();
                 }
-                share_ovelay_on = !share_ovelay_on;
+                share_ovelay_on = ! share_ovelay_on;
                 share_overlay.transition().duration(300).style('height', h);
+                toggleExitButtonHandler(true);
             };
             d3.select('#embed-link').on('click', embedHandler);
             d3.select('#share-link').on('click', shareHandler);
+            share_overlay.on('click', shareHandler);
+            embed_overlay.on('click', embedHandler);
 
             // initialize charts
             // check if there's an initial state of a selected member
@@ -372,6 +462,7 @@ define(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When) {
                 }
             }).render();
 
+            // handle initial state
             if ( member ) {
                 parties_view = false;
                 parties_chart.render();
@@ -402,6 +493,13 @@ define(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When) {
                 members_chart.render();
                 button_chart.zoom('all');
             }
+
+            // init tweeter
+            tweeterHandler();
+            if ( member || initial_party ) {
+                toggleExitButtonHandler(true);
+            }
+
             // after parties chart was initialised with default X scale domain,
             // set it's X domain to the min/max of members' scores
             parties_chart.domains =[
