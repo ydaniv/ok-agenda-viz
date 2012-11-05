@@ -361,8 +361,14 @@ define(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When) {
                 .attr('href', BASE_URL + agenda.absolute_url);
             d3.select('#number-of-votes').text(agenda.votes.length);
             d3.select('#loader').transition().delay(200).duration(400).style('top', '100%').style('opacity', 0);
-            d3.select('#embed-snippet').property('value', embed_snippet).on('click', function () { this.select(); });
-            d3.select('#share-snippet').property('value', BASE_URL + agenda.absolute_url).on('click', function () { this.select(); });
+            d3.select('#embed-snippet').property('value', embed_snippet).on('click', function () {
+                d3.event.stopPropagation();
+                this.select();
+            });
+            d3.select('#share-snippet').property('value', BASE_URL + agenda.absolute_url).on('click', function () {
+                d3.event.stopPropagation();
+                this.select();
+            });
 
             var embedHandler = function () {
                 var h = embed_ovelay_on ? '0%' : '100%';
@@ -382,6 +388,8 @@ define(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When) {
             };
             d3.select('#embed-link').on('click', embedHandler);
             d3.select('#share-link').on('click', shareHandler);
+            share_overlay.on('click', shareHandler);
+            embed_overlay.on('click', embedHandler);
 
             // initialize charts
             // check if there's an initial state of a selected member
