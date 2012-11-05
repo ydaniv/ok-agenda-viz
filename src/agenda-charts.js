@@ -38,7 +38,7 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
         this.height = options.height || parent_node.offsetHeight;
         this.width = options.width || parent_node.offsetWidth;
         this.padding = options.padding || {
-            x   : 25,
+            x   : 40,
             y   : 15
         };
         this.domains = options.domains;
