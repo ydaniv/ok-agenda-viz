@@ -354,9 +354,14 @@ define(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When) {
             });
 
             // set agenda metadata
-            d3.select('#owner-image > a').append('img')
-                .attr('src', BASE_URL + agenda.image).attr('height', '32')
-                .attr('href', BASE_URL + agenda.absolute_url);
+            if ( agenda.image ) {
+                d3.select('#owner-image > a').append('img')
+                    .attr('src', BASE_URL + agenda.image).attr('height', '32')
+                    .attr('href', BASE_URL + agenda.absolute_url);
+            }
+            else {
+                d3.select('#owner-image').style('display', 'none');
+            }
             d3.select('#agenda-name > a').text(agenda.name)
                 .attr('href', BASE_URL + agenda.absolute_url);
             d3.select('#public-owner-name > a').text(agenda.public_owner_name)
