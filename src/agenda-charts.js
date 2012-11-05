@@ -395,9 +395,12 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
         },
         showDetails : function (data, element) {
             var content = data[3],
-                x = element.attr('cx'),
-                y = element.attr('cy') - element.attr('r');
-            return this.tooltip.showTooltip(content, this.color_scale(data[0]), x | 0, y | 0);
+                x = +element.attr('cx'),
+                cy = +element.attr('cy'),
+                r = +element.attr('r'),
+                y = cy - r,
+                alter_y = cy + r
+            return this.tooltip.showTooltip(content, this.color_scale(data[0]), x | 0, y | 0, null, alter_y);
         },
         hideDetails : function () {
             return this.tooltip.hideTooltip();

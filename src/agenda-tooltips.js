@@ -2,8 +2,10 @@ define(function () {
     var FONT_SIZE = 12,
         IMAGE_WIDTH = 45,
         IMAGE_HEIGHT = 60,
-        flor = function (val, _flor) {
-            return val < _flor ? _flor : val;
+        flor = function (val, _flor, alter) {
+            return val < _flor ?
+                alter || _flor :
+                val;
         },
         ciel = function (val, _ciel) {
             return val > _ciel ? _ciel : val;
@@ -44,7 +46,7 @@ define(function () {
 
     Tooltip.prototype = {
         constructor     : Tooltip,
-        showTooltip     : function (content, color, x, y, image) {
+        showTooltip     : function (content, color, x, y, image, alter_y) {
             this.content = content;
             this.text.text(content);
             this.tooltip.attr('fill', color);
@@ -60,7 +62,7 @@ define(function () {
                     this.image.classed('no-events ie8tt', true);
                 }
             }
-            this.updatePosition(x, y);
+            this.updatePosition(x, y, alter_y);
             if ( IE8_COMPAT_MODE ) {
                 this.container.select('.ie8tt').style('visibility', 'visible');
             } else {
@@ -70,7 +72,7 @@ define(function () {
         hideTooltip     : function () {
             this.container.style('visibility', 'hidden');
         },
-        updatePosition  : function (x, y) {
+        updatePosition  : function (x, y, alter_y) {
             var padding = 10,
                 margin = 10,
                 image_margin = 50,
@@ -91,7 +93,7 @@ define(function () {
             y_box = y - box_height - margin;
 
             x_box = ciel(flor(x_box, 2), this.canvas_width - box_width);
-            y_box = flor(y_box, (this.image ? image_margin : 0) + 2);
+            y_box = flor(y_box, (this.image ? image_margin : 0) + 2, alter_y + margin);
 
             if ( this.image ) {
                 this.image.attr('x', x_box + box_width/2 - IMAGE_WIDTH/2)
