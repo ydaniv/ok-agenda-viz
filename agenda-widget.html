@@ -27,6 +27,8 @@
             margin: 0;
             padding: 0;
         }
+        .clearfix:before, .clearfix:after { content: ""; display: table; }
+        .clearfix:after { clear: both; }
         .color-axis-sign {
             width: 10px;
             height: 10px;
@@ -108,7 +110,7 @@
         }
         #controls {
             clear: both;
-            padding: 7px 0;
+            padding: 3px 5px;
         }
         #controls select {
             -webkit-appearance: none;
@@ -178,7 +180,9 @@
             padding: 0;
         }
         #header {
-            height: 65px;
+            border-bottom: 1px dashed #65BAF7;
+        }
+        #header-meta {
             padding: 5px;
             border-bottom: 1px dashed #65BAF7;
         }
@@ -243,12 +247,14 @@
 <body>
     <div id="container">
         <div id="header">
-            <div id="owner-image"><a href="" target="_blank" id="owner-image-anchor"></a></div>
-            <div id="headings">
-                <h1 id="agenda-name"><a href="" target="_blank"></a></h1><span id="number-of-votes-container"><span id="number-of-votes"></span> הצבעות</span>
-                <h2 id="public-owner-name">בעריכת <a href="" target="_blank"></a></h2>
+            <div id="header-meta" class="clearfix">
+                <div id="owner-image"><a href="" target="_blank" id="owner-image-anchor"></a></div>
+                <div id="headings">
+                    <h1 id="agenda-name"><a href="" target="_blank"></a></h1><span id="number-of-votes-container"><span id="number-of-votes"></span> הצבעות</span>
+                    <h2 id="public-owner-name">בעריכת <a href="" target="_blank"></a></h2>
+                </div>
             </div>
-            <div id="controls">
+            <div id="controls" class="clearfix">
                 <select id="parties-menu" name="party"></select>
                 <select id="knesset-menu" name="knesset">
                     <option value="18">הכנסת ה - 18</option>
