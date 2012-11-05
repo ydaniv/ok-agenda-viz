@@ -37,8 +37,7 @@
             display: block;
             position: absolute;
             right: 10px;
-            /*bottom: -59px;*/
-            bottom: -1px;
+            top: 74px;
             z-index: 1001;
             width: 26px;
             /*height: 60px;*/
@@ -78,6 +77,48 @@
         }
         .twitter-share-button {
             margin: 0 auto;
+        }
+        
+        #about-content {
+            margin-bottom: 1em;
+        }
+        #about-overlay {
+            position: absolute;
+            top: 44px;
+            right: 0;
+            left: 0;
+            z-index: 1010;
+            height: auto;
+            box-sizing: border-box;
+            overflow: auto;
+            font-size: 14px;
+            line-height: 150%;
+            background-color: #f6f7ec;
+        }
+        #about-overlay h3 {
+            margin: 0 0 1em;
+            font-size: 16px;
+        }
+        #about-overlay-padding {
+            padding: 20px 60px 20px 20px;
+        }
+        #about-toggler {
+            display: block;
+            float: left;
+            margin: 10px;
+            border-top: 12px solid #20557B;
+            border-left: 12px solid transparent;
+            border-right: 12px solid transparent;
+            cursor: pointer;
+        }
+        #about-toggler.opened {
+            border-top: none;
+            border-bottom: 12px solid #20557B;
+        }
+        #about-votes {
+            padding: 0;
+            list-style-position: inside;
+            list-style-type: square;
         }
         #agenda-name {
             display: inline-block;
@@ -141,6 +182,10 @@
             border-radius: 10px;
             outline: none;
         }
+        #exit-about {
+            top: 41px;
+            z-index: 1011;
+        }
         #headings {
             float: right;
         }
@@ -197,10 +242,10 @@
             padding: 0;
         }
         #header {
-            position: relative;
             border-bottom: 1px dashed #65BAF7;
         }
         #header-meta {
+            height: 32px;
             padding: 5px;
             border-bottom: 1px dashed #65BAF7;
         }
@@ -280,6 +325,16 @@
                 <div id="headings">
                     <h1 id="agenda-name"><a href="" target="_blank"></a></h1><span id="number-of-votes-container"><span id="number-of-votes"></span> הצבעות</span>
                     <h2 id="public-owner-name">בעריכת <a href="" target="_blank"></a></h2>
+                </div>
+                <span id="about-toggler"></span>
+                <span id="exit-about" class="exit-ribbon"></span>
+                <div id="about-overlay" class="overlay hide">
+                    <div id="about-overlay-padding">
+                        <h3>אודות</h3>
+                        <p id="about-content"></p>
+                        <h3>מבין ההצבעות המרכיבות את האג'נדה:</h3>
+                        <ul id="about-votes"></ul>
+                    </div>
                 </div>
             </div>
             <div id="controls" class="clearfix">
