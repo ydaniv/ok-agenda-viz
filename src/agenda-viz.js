@@ -286,6 +286,9 @@ define(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When) {
                 parties_chart.selection.all.call(parties_chart.transition, parties_chart, !is_all);
                 // toggle the transparency of the parties chart to events, to enable those on the members chart that's underneath it
                 parties_chart.toggleEvents(is_all);
+
+                // toggle the 'back-to-parties' ribbon
+                toggleExitButtonHandler(!is_all);
                 // clear party selection if needed
                 dispatcher.change_hash(is_all ? '' : party_id, false);
             });
@@ -369,7 +372,16 @@ define(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When) {
                 this.select();
             });
             d3.select('#tweeter').attr('data-text', agenda.name + ' בעריכת ' + agenda.public_owner_name);
+            d3.select('#exit-button').on('click', function () {
+                dispatcher.change_party(0);
+            });
 
+            var toggleExitButtonHandler = function (toggle) {
+                d3.select('#exit-button')
+                    .transition().duration(300)
+                        .style('height', toggle ? '60px' : '0px')
+                        .style('bottom', toggle ? '-59px' : '-1px');
+            };
             var tweeterHandler = function () {
                 // create a new dynamic tweeter
                 var share_url = d3.select('#share-snippet').property('value'),
@@ -470,6 +482,9 @@ define(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When) {
 
             // init tweeter
             tweeterHandler();
+            if ( member || initial_party ) {
+                toggleExitButtonHandler(true);
+            }
 
             // after parties chart was initialised with default X scale domain,
             // set it's X domain to the min/max of members' scores

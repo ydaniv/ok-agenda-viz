@@ -180,11 +180,25 @@
             padding: 0;
         }
         #header {
+            position: relative;
             border-bottom: 1px dashed #65BAF7;
         }
         #header-meta {
             padding: 5px;
             border-bottom: 1px dashed #65BAF7;
+        }
+        #exit-button {
+            display: block;
+            position: absolute;
+            right: 10px;
+            /*bottom: -59px;*/
+            bottom: -1px;
+            z-index: 100;
+            width: 26px;
+            /*height: 60px;*/
+            height: 0;
+            background: #09f url('/src/img/icons/agenda-embed-X.png') center 40px no-repeat;
+            cursor: pointer;
         }
         #footer {
             position: absolute;
@@ -271,6 +285,7 @@
                 </select>
                 <span id="toggle-zoom" name="zoom"></span>
             </div>
+            <span id="exit-button"></span>
         </div>
         <div id="charts">
             <div id="share-overlay" class="overlay">
