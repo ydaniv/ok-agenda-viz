@@ -199,21 +199,31 @@
             margin-right: 5px;
             padding-right: 10px;
             line-height: 20px;
-            background: url('/src/img/icons/i_info.png') right 3px no-repeat;
+            background: url('/src/img/icons/agenda-embed-help.png') right 3px no-repeat;
+        }
+        #footer-info p {
+            display: inline-block;
+            padding: 0 10px;
+            border-left: 1px solid #65BAF7;
+        }
+        #info-agenda {
+            cursor: pointer;
         }
         #embed-link {
             float: left;
             margin-left: 15px;
-            padding-left: 18px;
+            padding: 0 10px 0 28px;
             line-height: 20px;
-            background: url('/src/img/icons/i_embed.png') left 3px no-repeat;
+            background: url('/src/img/icons/i_embed.png') 10px 3px no-repeat;
+            border-right: 1px solid #65BAF7;
+            border-left: 1px solid #65BAF7;
         }
         #share-link {
             float: left;
             margin-left: 5px;
-            padding-left: 18px;
+            padding-left: 23px;
             line-height: 20px;
-            background: url('/src/img/icons/i_share.png') left 3px no-repeat;
+            background: url('/src/img/icons/i_share.png') 5px 3px no-repeat;
         }
         #embed-link:hover, #share-link:hover {
             text-decoration: underline;
@@ -274,7 +284,7 @@
             </div>
         </div>
         <div id="footer">
-            <p id="footer-info">ניתוח האג'נדה מאתר <a href="http://oknesset.org/" target="_blank">כנסת פתוחה</a></p>
+            <div id="footer-info"><p id="info-agenda">אג'נדה: ניתוח דפוסי הצבעה</p><p id="info-ok">מאתר <a href="http://oknesset.org/" target="_blank">כנסת פתוחה</a></p></div>
             <p id="share-link">שתף</p>
             <p id="embed-link">עמבד</p>
         </div>
