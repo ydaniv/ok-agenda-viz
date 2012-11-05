@@ -170,6 +170,23 @@ define(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When) {
                     data        : members_data,
                     container   : '#charts',
                     id          : 'members-canvas',
+                    mouseover   : function (member) {
+                        var _self = this,
+                            min_x = (member[0] | 0) - 2,
+                            max_x = (member[0] | 0) + 2;
+                        members_chart.selection.current.each(function (d) {
+                            if ( _self !== this && d[0] < max_x && d[0] > min_x ) {
+                                d3.select(this).select('line').attr('stroke-width', 0);
+                            }
+                        });
+                    },
+                    mouseout    : function (member) {
+                        members_chart.selection.current.each(function (d) {
+                            d3.select(this)
+                                .attr('transform', 'translate(' + members_chart.x_scale(d[0]) + ',0)')
+                                .select('line').attr('stroke-width', members_chart.bar_width);
+                        });
+                    },
                     click       : function (member) {
                         if ( ! members_touches ) {
                             selectMemberHandler(member, this);
@@ -203,7 +220,7 @@ define(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When) {
                             last_member.select('circle').attr('r', members_chart.bar_width / 2);
                         }
                         // set the hash to this member's id
-                        dispatcher.change_hash('member_' + member_id);
+                        dispatcher.change_hash(member_id, true);
                         // set the current focused member
                         members_chart.focused_member = member[8];
                         // show this member's tooltip
@@ -235,8 +252,11 @@ define(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When) {
                     zoom_out = function () {
                         members_chart.zoom(parties_chart.zoom_in ? 'all' : false, true);
                     };
+                // toggle view state
+                parties_view = is_all;
                 // clear focused member
                 clearMemberSelection();
+                
                 // loop over all parties
                 parties_chart.selection.all.each(function (d) {
                     var id = d[4];
@@ -257,28 +277,38 @@ define(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When) {
                         }
                     }
                 });
+                // re-render members according to view state
+//                (is_all ? members_chart.background : members_chart.foreground).call(members_chart);
                 if ( is_all ) {
                     button_chart.select().call(button_chart.transition, button_chart);
                     button_chart.zoom( ! parties_chart.zoom_in ? 'all' : false);
                 }
-                // toggle view state
-                parties_view = is_all;
                 // toggle all parties
                 parties_chart.selection.all.call(parties_chart.transition, parties_chart, !is_all);
                 // toggle the transparency of the parties chart to events, to enable those on the members chart that's underneath it
                 parties_chart.toggleEvents(is_all);
                 // clear party selection if needed
-                dispatcher.change_hash(is_all ? '' : 'party_' + party_id);
+                dispatcher.change_hash(is_all ? '' : party_id, false);
             });
-            dispatcher.on('change_hash', function (hash) {
-                var match = embed_snippet.match(/src="[^#]+(#?.*)"/);
-                window.location.hash = hash ? '#' + hash : '';
+            dispatcher.on('change_hash', function (hash, is_member) {
+                var match = embed_snippet.match(/src="[^#]+(#?.*)"/),
+                    id = is_member && hash;
+                hash = hash ?
+                    is_member ?
+                        '#member_' + hash :
+                        '#party_' + hash :
+                    '';
+                window.location.hash = hash;
                 if ( match && match.length > 1 ) {
                     embed_snippet = !!match[1] ?
-                                        embed_snippet.replace(match[1], '#' + hash) :
-                                        embed_snippet.replace(match[0], match[0] + '#' + hash);
+                                        embed_snippet.replace(match[1], hash) :
+                                        embed_snippet.replace(match[0], match[0] + hash);
                 }
                 d3.select('#embed-snippet').property('value', embed_snippet);
+                d3.select('#share-snippet').property(
+                    'value',
+                    BASE_URL + agenda.absolute_url + (hash && is_member ? 'member/' + id + '/' : '')
+                );
             });
             // IE can't set innerHTML of select, need to use the .options.add interface
             if ( typeof parties_menu[0][0].options.add == 'function' ) {
