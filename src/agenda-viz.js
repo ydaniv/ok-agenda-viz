@@ -172,8 +172,8 @@ define(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When) {
                     id          : 'members-canvas',
                     mouseover   : function (member) {
                         var _self = this,
-                            min_x = (member[0] | 0) - 2,
-                            max_x = (member[0] | 0) + 2;
+                            min_x = (member[0] | 0) - 1,
+                            max_x = (member[0] | 0) + 1;
                         members_chart.selection.current.each(function (d) {
                             if ( _self !== this && d[0] < max_x && d[0] > min_x ) {
                                 d3.select(this).select('line').attr('stroke-width', 0);
