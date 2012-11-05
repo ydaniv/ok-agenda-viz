@@ -83,7 +83,11 @@ define(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When) {
         embed_overlay = d3.select('#embed-overlay'),
         share_overlay = d3.select('#share-overlay'),
         embed_ovelay_on = false,
-        share_ovelay_on = false;
+        share_ovelay_on = false,
+        about_ovelay_on = false,
+    // `document.body` in IE8
+        window_height = document.body ? document.body.clientHeight : window.innerHeight,
+        window_width = document.body ? document.body.clientWidth : window.innerWidth;
 
     d3.select('#loader-message').text('טוען נתונים...');
     // when.js also wraps the resolved and rejected calls in `try-catch` statements
@@ -244,7 +248,12 @@ define(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When) {
                     // hide both tooltips
                     members_chart.hideDetails(last_member.data(), true);
                 },
-                parties_view = ! initial_member;
+                parties_view = ! initial_member,
+                votes = agenda.votes.slice(0)
+                    .sort(function (a, b) {
+                        return a.importance === b.importance ? 0 :
+                            a.importance < b.importance ? -1 : 1;
+                    }).slice(0, 10);
 
             dispatcher.on('change_party', function (party_id) {
                 var is_all = !+party_id,
@@ -354,15 +363,28 @@ define(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When) {
             });
 
             // set agenda metadata
-            d3.select('#owner-image > a').append('img')
-                .attr('src', BASE_URL + agenda.image).attr('height', '32')
-                .attr('href', BASE_URL + agenda.absolute_url);
+            // agenda owner image
+            if ( agenda.image ) {
+                d3.select('#owner-image > a').append('img')
+                    .attr('src', BASE_URL + agenda.image).attr('height', '32')
+                    .attr('href', BASE_URL + agenda.absolute_url);
+            }
+            else {
+                d3.select('#owner-image').style('display', 'none');
+            }
+            // agenda name
             d3.select('#agenda-name > a').text(agenda.name)
                 .attr('href', BASE_URL + agenda.absolute_url);
+            // agenda owner name
             d3.select('#public-owner-name > a').text(agenda.public_owner_name)
                 .attr('href', BASE_URL + agenda.absolute_url);
+            // number of votes
             d3.select('#number-of-votes').text(agenda.votes.length);
+
+            // remove that loader please
             d3.select('#loader').transition().delay(200).duration(400).style('top', '100%').style('opacity', 0);
+
+            // handle share and embed inputs
             d3.select('#embed-snippet').property('value', embed_snippet).on('click', function () {
                 d3.event.stopPropagation();
                 this.select();
@@ -371,7 +393,10 @@ define(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When) {
                 d3.event.stopPropagation();
                 this.select();
             });
+            // init the twitter button
             d3.select('#tweeter').attr('data-text', agenda.name + ' בעריכת ' + agenda.public_owner_name);
+
+            // add handlers for click on exit button
             d3.select('#exit-button').on('click', function () {
                 if ( share_ovelay_on ) {
                     shareHandler();
@@ -392,7 +417,6 @@ define(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When) {
                 d3.select('#exit-button')
                     .transition().duration(300)
                     .style('height', toggle ? '60px' : '0px')
-                    .style('bottom', toggle ? '-59px' : '-1px');
             };
             var tweeterHandler = function () {
                 // create a new dynamic tweeter
@@ -438,10 +462,37 @@ define(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When) {
                 share_overlay.transition().duration(300).style('height', h);
                 toggleExitButtonHandler(true);
             };
+            var aboutToggleHandler = (function () {
+                var overlay = d3.select('#about-overlay'),
+                    toggler = d3.select('#about-toggler'),
+                    exit_button = d3.select('#exit-about'),
+                    hide_bottom = window_height - 43 + 'px',
+                    handler = function () {
+                        var bottom = about_ovelay_on ? hide_bottom : '21px';
+                        about_ovelay_on = ! about_ovelay_on;
+                        exit_button.transition().duration(about_ovelay_on ? 300 : 50).style('height', about_ovelay_on ? '60px' : 0);
+                        overlay.transition().duration(300).style('bottom', bottom);
+                        toggler.classed('opened', about_ovelay_on);
+                    };
+                exit_button.on('click', handler);
+                overlay.style('bottom', hide_bottom).classed('hide', false);
+                return handler;
+            }());
+            // handle clicks on embed/share links and their overlays
             d3.select('#embed-link').on('click', embedHandler);
             d3.select('#share-link').on('click', shareHandler);
             share_overlay.on('click', shareHandler);
             embed_overlay.on('click', embedHandler);
+
+            // init the About overlay
+            d3.select('#about-content').text(agenda.description);
+            d3.select('#about-votes').selectAll('li')
+                .data(votes).enter().append('li')
+                .text(function (d) {
+                    return d.title;
+                });
+            d3.select('#about-toggler').on('click', aboutToggleHandler);
+            d3.select('#about-overlay').on('click', aboutToggleHandler);
 
             // initialize charts
             // check if there's an initial state of a selected member
