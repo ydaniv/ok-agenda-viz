@@ -61,6 +61,9 @@
             stroke-width: 0px;
             z-index: 2000;
         }
+        .twitter-share-button {
+            margin: 0 auto;
+        }
         #agenda-name {
             display: inline-block;
             margin: 0 0 4px 6px;
@@ -214,6 +217,7 @@
         }
         .overlay-clip {
             width: 100%;
+            margin-bottom: 20px;
             outline: none;
             padding: 10px 5px;
             direction: ltr;
@@ -226,8 +230,9 @@
         .overlay-message {
             width: 80%;
             max-width: 400px;
-            color: #fff;
             margin: 10% auto 0;
+            text-align: center;
+            color: #fff;
         }
         .overlay-message p {
             text-align: center;
@@ -253,7 +258,10 @@
         </div>
         <div id="charts">
             <div id="share-overlay" class="overlay">
-                <div class="overlay-message"><p>שתפו את הלינק לאג'נדה:</p><input type="text" class="overlay-clip" id="share-snippet" value=""/></div>
+                <div class="overlay-message">
+                    <p>שתפו את הלינק לאג'נדה:</p><input type="text" class="overlay-clip" id="share-snippet" value=""/>
+                    <a href="https://twitter.com/share" class="hide" data-url="http://oknesset.org/agenda/2/" data-text="שקיפות המידע הציבורי בעריכת התנועה לחופש המידע" data-lang="he" data-size="large" id="tweeter">ציוץ</a>
+                </div>
             </div>
             <div id="embed-overlay" class="overlay">
                 <div class="overlay-message"><p>הטמיעו את האג'נדה אצלכם באתר:</p><input type="text" class="overlay-clip" id="embed-snippet" value=""/></div>
