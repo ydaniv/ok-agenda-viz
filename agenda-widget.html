@@ -15,7 +15,7 @@
             padding: 0;
         }
         body {
-            font-family: openfontregular, sans-serif;
+            font-family: openfont, sans-serif;
             font-size: 14px;
             line-height: 1.143;
             color: #20557B;
@@ -171,14 +171,17 @@
                -moz-appearance: none;
                 -ms-appearance: none;
                  -o-appearance: none;
-            padding: 0 3px 2px 15px;
+            padding: 0 8px 0px 25px;
             background-image: url('/src/img/icons/i_drop.png');
             background-position: 7px 55%;
             background-repeat: no-repeat;
+            font-family: openfont, sans-serif;
+            font-size: 14px;
+            color: #20557B;
         }
         #controls select, #controls span {
             background-color: transparent;
-            border: 1px solid #355c7f;
+            border: 1px solid #65BAF7;
             border-radius: 10px;
             outline: none;
         }
@@ -229,6 +232,9 @@
         #parties-chart {
             z-index: 10;
         }
+        #parties-menu{
+            font-weight: 700;
+        }
         #public-owner-name {
             font-size: 12px;
             line-height: 100%;
@@ -257,24 +263,25 @@
             font-size: 12px;
             border-top: 1px dashed #65BAF7;
         }
+        #footer p:hover {
+            background-color: #65BAF7;
+        }
         #footer-info {
             float: right;
-            margin-right: 5px;
-            padding-right: 10px;
+            margin-right: 0;
             line-height: 20px;
-            background: url('/src/img/icons/agenda-embed-help.png') right 3px no-repeat;
         }
         #footer-info p {
             display: inline-block;
-            padding: 0 10px;
+            padding-right: 21px;
             border-left: 1px solid #65BAF7;
+            background: url('/src/img/icons/agenda-embed-help.png') 99% 2px no-repeat;
         }
         #info-agenda {
             cursor: pointer;
         }
         #embed-link {
             float: left;
-            margin-left: 15px;
             padding: 0 10px 0 28px;
             line-height: 20px;
             background: url('/src/img/icons/i_embed.png') 10px 3px no-repeat;
@@ -283,13 +290,11 @@
         }
         #share-link {
             float: left;
-            margin-left: 5px;
-            padding-left: 23px;
+            padding: 0 15px 0 28px;
             line-height: 20px;
-            background: url('/src/img/icons/i_share.png') 5px 3px no-repeat;
+            background: url('/src/img/icons/i_share.png') 10px 3px no-repeat;
         }
         #embed-link:hover, #share-link:hover {
-            text-decoration: underline;
             cursor: pointer;
         }
         .overlay-clip {
