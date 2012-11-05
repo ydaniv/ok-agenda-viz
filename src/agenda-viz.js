@@ -183,7 +183,6 @@ define(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When) {
                     mouseout    : function (member) {
                         members_chart.selection.current.each(function (d) {
                             d3.select(this)
-                                .attr('transform', 'translate(' + members_chart.x_scale(d[0]) + ',0)')
                                 .select('line').attr('stroke-width', members_chart.bar_width);
                         });
                     },
