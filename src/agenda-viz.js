@@ -95,7 +95,7 @@ define(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When) {
     // when.js also wraps the resolved and rejected calls in `try-catch` statements
     When.all(
         [Parties.get('http://oknesset.org/api/v2/party/?callback=?'),
-            Agenda.get('http://oknesset.org/api/v2/agenda/' + agenda_id + '/?callback=?', false),
+            Agenda.get('http://oknesset.org/api/v2/agenda/' + agenda_id + '/?callback=?', true),
             Members.get('http://oknesset.org/api/v2/member/?callback=?')],
         function (responses) {
             var parties = responses[0],
@@ -255,7 +255,7 @@ define(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When) {
                         .sort(function (a, b) {
                             return a.importance === b.importance ? 0 :
                                     a.importance < b.importance ? -1 : 1;
-                        }).slice(0, 10);
+                        }).slice(0, 5);
 
             dispatcher.on('change_party', function (party_id) {
                 var is_all = !+party_id,
@@ -513,9 +513,14 @@ define(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When) {
             d3.select('#about-content').text(agenda.description);
             d3.select('#about-votes').selectAll('li')
                                     .data(votes).enter().append('li')
-                                    .text(function (d) {
-                                        return d.title;
-                                    });
+                                    .append('a')
+                                        .attr('target', '_blank')
+                                        .attr('href', function (d) {
+                                            return BASE_URL + '/vote/' + d.id + '/';
+                                        })
+                                        .text(function (d) {
+                                            return d.title;
+                                        });
             d3.select('#about-toggler').on('click', aboutToggleHandler);
             d3.select('#about-overlay').on('click', aboutToggleHandler);
 
