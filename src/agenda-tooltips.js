@@ -32,7 +32,7 @@ define(function () {
                             .attr('rx', '10')
                             .attr('class', 'tooltip');
         this.text = container.append('text')
-                                .attr('font-family', 'sans-serif')
+                                .attr('font-family', 'openfont')
                                 .attr('fill', '#fff')
                                 .attr('font-size', FONT_SIZE);
         // make up for the lack of a group and disale events on text and tooltip
