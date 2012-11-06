@@ -192,6 +192,9 @@
         #headings {
             float: right;
         }
+        #help-overlay p {
+            text-align: right;
+        }
         #loader {
             position: absolute;
             top: 0;
@@ -270,15 +273,18 @@
             float: right;
             margin-right: 0;
             line-height: 20px;
+            background: url('/src/img/icons/agenda-embed-help.png') 97% 2px no-repeat;
         }
         #footer-info p {
             display: inline-block;
-            padding-right: 21px;
             border-left: 1px solid #65BAF7;
-            background: url('/src/img/icons/agenda-embed-help.png') 99% 2px no-repeat;
         }
         #info-agenda {
+            padding: 0 30px 0 10px;
             cursor: pointer;
+        }
+        #info-ok {
+            padding: 0 10px;
         }
         #embed-link {
             float: left;
@@ -360,6 +366,9 @@
             </div>
             <div id="embed-overlay" class="overlay">
                 <div class="overlay-message"><p>הטמיעו את האג'נדה אצלכם באתר:</p><input type="text" class="overlay-clip" id="embed-snippet" value=""/></div>
+            </div>
+            <div id="help-overlay" class="overlay">
+                <div class="overlay-message"><p>מערכת האג'נדות מאפשרת לעקוב אחרי דפוסי הצבעה של חברי הכנסת בנושאים שונים. עורכי האג'נדות - גופים, עמותות ויחידים, מגדירים חוקים חדשים והצעות חוק כתומכים או נוגדים את האג'נדה אותה הם מקדמים, והמערכת מציגה את המגמות העולות מאופני ההצבעה של הח"כים בהתאם.</p></div>
             </div>
         </div>
         <div id="footer">
