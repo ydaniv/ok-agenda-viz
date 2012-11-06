@@ -168,7 +168,7 @@ define(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When) {
                     if ( OVERRIDE_MEMBERS_CLICK && HOSTNAME ) {
                         parent.postMessage(member[8], HOSTNAME);
                     } else {
-                        window.open(BASE_URL + member[7]);
+                        window.open(BASE_URL + agenda.absolute_url + 'member/' + member[8] + '/');
                     }
                 },
                 members_touches = 0,
