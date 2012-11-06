@@ -15,7 +15,7 @@ body, html {
     padding: 0;
 }
 body {
-    font-family: openfontregular, sans-serif;
+    font-family: openfont, sans-serif;
     font-size: 14px;
     line-height: 1.143;
     color: #20557B;
@@ -171,14 +171,17 @@ div, h1, h2, p {
     -moz-appearance: none;
     -ms-appearance: none;
     -o-appearance: none;
-    padding: 0 3px 2px 15px;
+    padding: 0 8px 0px 25px;
     background-image: url('img/icons/i_drop.png');
     background-position: 7px 55%;
     background-repeat: no-repeat;
+    font-family: openfont, sans-serif;
+    font-size: 14px;
+    color: #20557B;
 }
 #controls select, #controls span {
     background-color: transparent;
-    border: 1px solid #355c7f;
+    border: 1px solid #65BAF7;
     border-radius: 10px;
     outline: none;
 }
@@ -188,6 +191,9 @@ div, h1, h2, p {
 }
 #headings {
     float: right;
+}
+#help-overlay p {
+    text-align: right;
 }
 #loader {
     position: absolute;
@@ -229,6 +235,9 @@ div, h1, h2, p {
 #parties-chart {
     z-index: 10;
 }
+#parties-menu{
+    font-weight: 700;
+}
 #public-owner-name {
     font-size: 12px;
     line-height: 100%;
@@ -257,24 +266,28 @@ div, h1, h2, p {
     font-size: 12px;
     border-top: 1px dashed #65BAF7;
 }
+#footer p:hover {
+    background-color: #65BAF7;
+}
 #footer-info {
     float: right;
-    margin-right: 5px;
-    padding-right: 10px;
+    margin-right: 0;
     line-height: 20px;
-    background: url('img/icons/agenda-embed-help.png') right 3px no-repeat;
+    background: url('img/icons/agenda-embed-help.png') 97% 2px no-repeat;
 }
 #footer-info p {
     display: inline-block;
-    padding: 0 10px;
     border-left: 1px solid #65BAF7;
 }
 #info-agenda {
+    padding: 0 30px 0 10px;
     cursor: pointer;
+}
+#info-ok {
+    padding: 0 10px;
 }
 #embed-link {
     float: left;
-    margin-left: 15px;
     padding: 0 10px 0 28px;
     line-height: 20px;
     background: url('img/icons/i_embed.png') 10px 3px no-repeat;
@@ -283,13 +296,11 @@ div, h1, h2, p {
 }
 #share-link {
     float: left;
-    margin-left: 5px;
-    padding-left: 23px;
+    padding: 0 15px 0 28px;
     line-height: 20px;
-    background: url('img/icons/i_share.png') 5px 3px no-repeat;
+    background: url('img/icons/i_share.png') 10px 3px no-repeat;
 }
 #embed-link:hover, #share-link:hover {
-    text-decoration: underline;
     cursor: pointer;
 }
 .overlay-clip {
@@ -355,6 +366,9 @@ div, h1, h2, p {
         </div>
         <div id="embed-overlay" class="overlay">
             <div class="overlay-message"><p>הטמיעו את האג'נדה אצלכם באתר:</p><input type="text" class="overlay-clip" id="embed-snippet" value=""/></div>
+        </div>
+        <div id="help-overlay" class="overlay">
+            <div class="overlay-message"><p>מערכת האג'נדות מאפשרת לעקוב אחרי דפוסי הצבעה של חברי הכנסת בנושאים שונים. עורכי האג'נדות - גופים, עמותות ויחידים, מגדירים חוקים חדשים והצעות חוק כתומכים או נוגדים את האג'נדה אותה הם מקדמים, והמערכת מציגה את המגמות העולות מאופני ההצבעה של הח"כים בהתאם.</p></div>
         </div>
     </div>
     <div id="footer">

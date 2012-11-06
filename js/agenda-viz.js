@@ -82,9 +82,11 @@ define(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When) {
         Members = Object.create(Model),
         embed_overlay = d3.select('#embed-overlay'),
         share_overlay = d3.select('#share-overlay'),
-        embed_ovelay_on = false,
-        share_ovelay_on = false,
-        about_ovelay_on = false,
+        help_overlay = d3.select('#help-overlay'),
+        embed_overlay_on = false,
+        share_overlay_on = false,
+        about_overlay_on = false,
+        help_overlay_on = false,
     // `document.body` in IE8
         window_height = document.body ? document.body.clientHeight : window.innerHeight,
         window_width = document.body ? document.body.clientWidth : window.innerWidth;
@@ -93,7 +95,7 @@ define(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When) {
     // when.js also wraps the resolved and rejected calls in `try-catch` statements
     When.all(
         [Parties.get('http://oknesset.org/api/v2/party/?callback=?'),
-            Agenda.get('http://oknesset.org/api/v2/agenda/' + agenda_id + '/?callback=?', true),
+            Agenda.get('http://oknesset.org/api/v2/agenda/' + agenda_id + '/?callback=?', false),
             Members.get('http://oknesset.org/api/v2/member/?callback=?')],
         function (responses) {
             var parties = responses[0],
@@ -398,10 +400,13 @@ define(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When) {
 
             // add handlers for click on exit button
             d3.select('#exit-button').on('click', function () {
-                if ( share_ovelay_on ) {
+                if ( share_overlay_on ) {
                     shareHandler();
                 }
-                else if ( embed_ovelay_on ) {
+                else if ( help_overlay_on ) {
+                    helpHandler();
+                }
+                else if ( embed_overlay_on ) {
                     embedHandler();
                 }
                 else {
@@ -444,22 +449,40 @@ define(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When) {
                 document.head.appendChild(script);
             };
             var embedHandler = function () {
-                var h = embed_ovelay_on ? '0%' : '100%';
-                if ( share_ovelay_on ) {
+                var h = embed_overlay_on ? '0%' : '100%';
+                if ( share_overlay_on ) {
                     shareHandler();
                 }
-                embed_ovelay_on = !embed_ovelay_on;
+                else if ( help_overlay_on ) {
+                    helpHandler();
+                }
+                embed_overlay_on = ! embed_overlay_on;
                 embed_overlay.transition().duration(300).style('height', h);
                 toggleExitButtonHandler(true);
             };
             var shareHandler = function () {
-                var h = share_ovelay_on ? '0%' : '100%';
-                share_ovelay_on || tweeterHandler();
-                if ( embed_ovelay_on ) {
+                var h = share_overlay_on ? '0%' : '100%';
+                share_overlay_on || tweeterHandler();
+                if ( embed_overlay_on ) {
                     embedHandler();
                 }
-                share_ovelay_on = ! share_ovelay_on;
+                else if ( help_overlay_on ) {
+                    helpHandler();
+                }
+                share_overlay_on = ! share_overlay_on;
                 share_overlay.transition().duration(300).style('height', h);
+                toggleExitButtonHandler(true);
+            };
+            var helpHandler = function () {
+                var h = help_overlay_on ? '0%' : '100%';
+                if ( embed_overlay_on ) {
+                    embedHandler();
+                }
+                else if ( share_overlay_on ) {
+                    shareHandler();
+                }
+                help_overlay_on = ! help_overlay_on;
+                help_overlay.transition().duration(300).style('height', h);
                 toggleExitButtonHandler(true);
             };
             var aboutToggleHandler = (function () {
@@ -468,11 +491,11 @@ define(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When) {
                     exit_button = d3.select('#exit-about'),
                     hide_bottom = window_height - 43 + 'px',
                     handler = function () {
-                        var bottom = about_ovelay_on ? hide_bottom : '21px';
-                        about_ovelay_on = ! about_ovelay_on;
-                        exit_button.transition().duration(about_ovelay_on ? 300 : 50).style('height', about_ovelay_on ? '60px' : 0);
+                        var bottom = about_overlay_on ? hide_bottom : '21px';
+                        about_overlay_on = ! about_overlay_on;
+                        exit_button.transition().duration(about_overlay_on ? 300 : 50).style('height', about_overlay_on ? '60px' : 0);
                         overlay.transition().duration(300).style('bottom', bottom);
-                        toggler.classed('opened', about_ovelay_on);
+                        toggler.classed('opened', about_overlay_on);
                     };
                 exit_button.on('click', handler);
                 overlay.style('bottom', hide_bottom).classed('hide', false);
@@ -481,8 +504,10 @@ define(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When) {
             // handle clicks on embed/share links and their overlays
             d3.select('#embed-link').on('click', embedHandler);
             d3.select('#share-link').on('click', shareHandler);
+            d3.select('#info-agenda').on('click', helpHandler);
             share_overlay.on('click', shareHandler);
             embed_overlay.on('click', embedHandler);
+            help_overlay.on('click', helpHandler);
 
             // init the About overlay
             d3.select('#about-content').text(agenda.description);
@@ -507,6 +532,8 @@ define(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When) {
                 data        : members_data,
                 container   : '#toggle-zoom',
                 id          : 'zoom-button-canvas',
+                width       : 80,
+                height      : 22,
                 padding     : {
                     x   : 10,
                     y   : 5

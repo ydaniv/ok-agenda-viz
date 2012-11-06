@@ -39,7 +39,7 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
         this.width = options.width || parent_node.offsetWidth;
         this.padding = options.padding || {
             x   : 40,
-            y   : 15
+            y   : 40
         };
         this.domains = options.domains;
         this.ranges = options.ranges;
@@ -148,6 +148,16 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
                         .attr('width', 10)
                         .attr('height', 10)
                         .attr('xlink:href', 'img/icons/i_minus.png');
+                    // 'against' label
+                    color_axis.append('text')
+                        .style('direction', 'ltr')
+                        .attr('x', this.padding.x - 20)
+                        .attr('y', this.y_out_min + 20)
+                        .attr('font-family', 'openfont')
+                        .attr('fill', this.color_scale(this.x_in_min))
+                        .attr('font-size', 18)
+                        .attr('font-weight', 800)
+                        .text('נגד');
                     // add '+' image
                     color_axis.append('image')
                         // image is 10x10 + 1px margin
@@ -156,6 +166,16 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
                         .attr('width', 10)
                         .attr('height', 10)
                         .attr('xlink:href', 'img/icons/i_plus.png');
+                    // 'for' label 
+                    color_axis.append('text')
+                        .style('direction', 'ltr')
+                        .attr('x', this.width - this.padding.x - 10)
+                        .attr('y', this.y_out_min + 20)
+                        .attr('font-family', 'openfont')
+                        .attr('fill', this.color_scale(this.x_in_max))
+                        .attr('font-size', 18)
+                        .attr('font-weight', 800)
+                        .text('בעד');
                 }
             }
             this.color_grad.selectAll('stop').remove();
@@ -186,7 +206,7 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
                 // create the Y axis
                 if ( ! this.y_axis ) {
                     this.y_axis = IE8_COMPAT_MODE ? this.svg : this.svg.append('g');
-                    dy = (this.height - 2 * this.padding.y) / 20;
+                    dy = (this.y_out_min) / 21;
                     for ( n = 1; n < 21 ; n++ ) {
                         this.y_axis.append('line')
                             .attr('x1', 0)
@@ -197,6 +217,45 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
                             .attr('stroke-width', 1)
                             .attr('stroke-dasharray', '6,3');
                     }
+                    this.y_axis.append('line')
+                        .attr('x1', this.x_out_min - this.padding.x / 2)
+                        .attr('x2', this.x_out_min - this.padding.x / 2)
+                        .attr('y1', this.y_out_max)
+                        .attr('y2', this.y_out_min)
+                        .attr('stroke', '#65BAF7')
+                        .attr('stroke-width', 2)
+                        .attr('stroke-dasharray', '2,1');
+                    this.y_axis.append('polygon')
+                        .attr('points', '0 8,3 0,4 0,8 8')
+                        .attr('fill', '#65BAF7')
+                        .attr('transform', 'translate(' +
+                        (this.x_out_min - this.padding.x / 2 - 4) + ' ' +
+                        (this.y_out_max - 2) + ')');
+                    this.y_axis.append('polygon')
+                        .attr('points', '0 0,8 0,4 8,3 8')
+                        .attr('fill', '#65BAF7')
+                        .attr('transform', 'translate(' +
+                        (this.x_out_min - this.padding.x / 2 - 4) + ' ' +
+                        (this.y_out_min - 6) + ')');
+                    this.y_axis.append('rect')
+                        .attr('x', this.x_out_min - 30)
+                        .attr('y', (this.y_out_min - this.y_out_max) / 2 - 24)
+                        .attr('width', 22)
+                        .attr('height', 110)
+                        .attr('fill', '#f6f7ec')
+                        .attr('stroke', 'none');
+                    this.y_axis.append('text')
+                        .style('direction', 'ltr')
+                        .attr('x', this.x_out_min - this.padding.x / 2 + 4)
+                        .attr('y', (this.y_out_min - this.y_out_max) / 2 + 80)
+                        .attr('font-family', 'openfont')
+                        .attr('fill', '#65BAF7')
+                        .attr('font-size', 18)
+                        .attr('font-weight', 800)
+                        .attr('transform', 'rotate(-90 ' +
+                        (this.x_out_min - this.padding.x / 2 + 4) + ' ' +
+                        ((this.y_out_min - this.y_out_max) / 2 + 80) + ')')
+                        .text('מידת פעילות');
                 }
 
                 this.createColorAxis()
