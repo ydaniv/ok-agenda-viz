@@ -39,7 +39,7 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
         this.width = options.width || parent_node.offsetWidth;
         this.padding = options.padding || {
             x   : 40,
-            y   : 15
+            y   : 40
         };
         this.domains = options.domains;
         this.ranges = options.ranges;
@@ -148,6 +148,15 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
                         .attr('width', 10)
                         .attr('height', 10)
                         .attr('xlink:href', '/src/img/icons/i_minus.png');
+                    color_axis.append('text')
+                        .style('direction', 'ltr')
+                        .attr('x', this.padding.x - 20)
+                        .attr('y', this.y_out_min + 20)
+                        .attr('font-family', 'openfont')
+                        .attr('fill', this.color_scale(this.x_in_min))
+                        .attr('font-size', 18)
+                        .attr('font-weight', 800)
+                        .text('נגד');
                     // add '+' image
                     color_axis.append('image')
                         // image is 10x10 + 1px margin
@@ -156,6 +165,15 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
                         .attr('width', 10)
                         .attr('height', 10)
                         .attr('xlink:href', '/src/img/icons/i_plus.png');
+                    color_axis.append('text')
+                        .style('direction', 'ltr')
+                        .attr('x', this.width - this.padding.x - 10)
+                        .attr('y', this.y_out_min + 20)
+                        .attr('font-family', 'openfont')
+                        .attr('fill', this.color_scale(this.x_in_max))
+                        .attr('font-size', 18)
+                        .attr('font-weight', 800)
+                        .text('בעד');
                 }
             }
             this.color_grad.selectAll('stop').remove();
@@ -186,7 +204,7 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
                 // create the Y axis
                 if ( ! this.y_axis ) {
                     this.y_axis = IE8_COMPAT_MODE ? this.svg : this.svg.append('g');
-                    dy = (this.height - 2 * this.padding.y) / 20;
+                    dy = (this.height - this.padding.y) / 21;
                     for ( n = 1; n < 21 ; n++ ) {
                         this.y_axis.append('line')
                             .attr('x1', 0)
