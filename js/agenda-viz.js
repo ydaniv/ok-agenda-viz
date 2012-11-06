@@ -157,7 +157,7 @@ define(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When) {
                     no_axes     : true
                 }),
                 enterPartyHandler = function (party_id, el) {
-                    dispatcher.change_hash('party_' + party_id);
+                    dispatcher.change_hash(party_id);
                     parties_chart.toggleEvents(false);
                     d3.select(el).attr('fill-opacity', 0);
                     // doesn't seem to trigger 'change' event, at least not on chrome
@@ -314,10 +314,13 @@ define(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When) {
                     '';
                 share_url = BASE_URL + agenda.absolute_url + (hash && is_member ? 'member/' + id + '/' : '');
                 window.location.hash = hash;
-                if ( match && match.length > 1 ) {
+                if ( match && match[1] ) {
                     embed_snippet = !!match[1] ?
                         embed_snippet.replace(match[1], hash) :
                         embed_snippet.replace(match[0], match[0] + hash);
+                }
+                else {
+                    embed_snippet = embed_snippet.replace(/src="([^"]*)"/, 'src="$1' + hash + '"')
                 }
                 d3.select('#embed-snippet').property('value', embed_snippet);
                 d3.select('#share-snippet').property('value', share_url);
