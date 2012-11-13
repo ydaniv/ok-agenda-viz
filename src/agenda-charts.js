@@ -633,7 +633,7 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
          * This method is to be used in the `selection.call(method)` way of invocation.
          *
          * @memberof PartiesChart
-         * @param selection {@link d3.selection} a selection over elements in the chart
+         * @param selection {d3.selection} a selection over elements in the chart
          * @param chart {PartiesChart} alias for this
          * @param [transit_out] {Boolean} whether this transition is done into or out of view
          * @param [callback] {Function} a callback function to be triggered at end of transition
@@ -765,25 +765,51 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
         }
     });
 
-    
+    /**
+     * Renders the members' chart.
+     * 
+     * @constructor
+     * @name MembersChart
+     * @extends {Chart}
+     * @param options {Object} configuration object for the MembersChart instance
+     */
     function MembersChart (options) {
         var _self = this;
+        // call super class constructor
         Chart.call(this, options);
+        // set optoins or defaults
         this.bar_width = options.bar_width || 8;
         this.stroke = options.stroke || 0;
+        // for now this is not compatible with IE8 but r2d3.js might be ready for `g` elements in the future
         this.element = 'g';
         this.selector = '.member';
+        // a store for parties toggled on
         this.parties_toggle = {};
         this.zoom_in = false;
+        // the points attribute value of the polygon that represents the torso of the member
         this.member_torso = '0 10,0 1,1 1,1 -1,3 -1,3 1,5 1,5 -1,7 -1,7 1,8 1,8 10';
+        // a smaller torso for the parties view
 //        this.member_torso = '0 15,0 0,4 0,4 15';
+        // 15% threshold for member's volume, below which the member is rendered only as a circle below the x axis
         this.volume_threshold = .15;
-
+        // add a global `defs` element
         this.svg.append('defs');
     }
 
+    // MembersChart class inheritable properties and methods
+    /**
+     *  first we extend {@link Chart}.
+     */
     MembersChart.prototype = extend(Object.create(Chart.prototype), {
         constructor     : MembersChart,
+        /**
+         * Sets the instance's data.
+         * Takes an `Array` of `Object`s and maps it into an `Array` of Array`s.
+         *
+         * @memberof MembersChart
+         * @param data {Array} list of `Objects` that represent parties
+         * @return {MembersChart}
+         */
         setData         : function (data) {
             //# Array.prototype.map
             this.data = data.map(function(member) {
@@ -804,6 +830,17 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
             });
             return this;
         },
+        /**
+         * Sets the output values for the chart's ranges.
+         * If the `this.ranges` is set then it's used to always override given arguments or defaults.
+         *
+         * @memberof MembersChart
+         * @param [x_min] {Number} minimal value to use for x range
+         * @param [x_max] {Number} maximal value to use for x range
+         * @param [y_min] {Number} minimal value to use for y range
+         * @param [y_max] {Number} maximal value to use for y range
+         * @return {MembersChart}
+         */
         setRanges       : function (x_min, x_max, y_min, y_max) {
             // if ranges was set in options
             if ( this.ranges && ! this.ranges_set ) {
@@ -811,32 +848,59 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
                 // use it to override the defaults
                 return this.setRanges.apply(this, this.ranges);
             }
-            this.x_out_min = defined(x_min, this.padding.x); 
-            this.x_out_max = defined(x_max, this.width - this.padding.x); 
-            this.y_out_min = defined(y_min, this.height - this.padding.y); 
+            // defaults:
+            // left padding
+            this.x_out_min = defined(x_min, this.padding.x);
+            // left padding + chart's width
+            this.x_out_max = defined(x_max, this.width - this.padding.x);
+            // top padding - chart's height
+            this.y_out_min = defined(y_min, this.height - this.padding.y);
+            // top padding
             this.y_out_max = defined(y_max, this.padding.y); 
             return this;
         },
+        /**
+         * Renders an element in the chart.
+         * This method is to be used in the `selection.call(method)` way of invocation.
+         *
+         * @memberof MembersChart
+         * @param selection {d3.selection} a selection over elements in the chart
+         * @param chart {MembersChart} alias for this
+         * @param complete {Boolean} whether to completely draw this element
+         */
         renderElement   : function (selection, chart, complete) {
             var threshold = (chart.volume_threshold * chart.y_in_max) | 0;
             selection.classed(chart.selector.slice(1), true)
                     .attr('transform', function(d, i) {
                         return 'translate(' + chart.x_scale(d[0]) + ',0)';
-                    // for each g element, check if the corresponding member's volume is below or over threshold
+                    // for each `g` element, check if the corresponding member's volume is below or over threshold
                     // and render accordingly
                     }).each(function (d, i) {
                         d3.select(this).call(
+                            // if below volume threshold
                             d[1] < threshold ?
+                                // draw under the x axis
                                 chart.renderUnder :
+                                // otherwise draw the standard member visualization
                                 chart.renderOver,
                             chart,
                             complete
                         );
                     });
         },
+        /**
+         * Renders an element in the chart in the standard form.
+         * This method is to be used in the `selection.call(method)` way of invocation.
+         *
+         * @memberof MembersChart
+         * @param selection {d3.selection} a selection over elements in the chart
+         * @param chart {MembersChart} alias for this
+         * @param complete {Boolean} whether to completely draw this element
+         */
         renderOver      : function (selection, chart, complete) {
             var bar_w = chart.bar_width;
             selection.classed('volume_over', true).classed('active', complete)
+                // draw the dashed bar
                 .append('line')
                     .attr('x1', bar_w / 2)
                     .attr('x2', bar_w / 2)
@@ -851,6 +915,7 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
                         return chart.color_scale(d[0]);
                     });
             // lets start drawing the person
+            // this is the torso
             selection.append('polygon')
                 .attr('points', chart.member_torso)
                 .attr('fill', function(d) {
@@ -860,6 +925,7 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
                     return 'translate(0,' + (complete ? chart.y_scale(d[1]) : chart.height) + ')';
                 })
                 .style('visibility', complete ? 'visible' : 'hidden');
+            // this is the head
             selection.append('circle')
                 .attr('cx', bar_w / 2)
                 .attr('cy', ! complete ? chart.y_out_min : function(d) {
@@ -880,9 +946,19 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
                     return chart.y_scale(d[1]);
                 });
         },
+        /**
+         * Renders an element in the chart of a member that has a volume below threshold.
+         * This method is to be used in the `selection.call(method)` way of invocation.
+         *
+         * @memberof MembersChart
+         * @param selection {d3.selection} a selection over elements in the chart
+         * @param chart {MembersChart} alias for this
+         * @param complete {Boolean} whether to completely draw this element
+         */
         renderUnder     : function (selection, chart, complete) {
             var half_bar_w = chart.bar_width / 2;
             selection.classed('volume_under', true).classed('active', complete)
+                // draw a head below the x axis
                 .append('circle')
                     .attr('cx', half_bar_w)
                     .attr('cy', chart.y_out_min + half_bar_w * 2)
@@ -891,11 +967,23 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
                     })
                     .attr('r', ! complete ? 0 : half_bar_w);
         },
+        /**
+         * Renders the chart.
+         * If `complete` is `false` it does basic rendering but keeps the graph hidden, preparing it
+         * for later call of {@link MembersChart.transition}.
+         * If `complete` is `true` draws the chart completely according to data.
+         *
+         * @memberof MembersChart
+         * @param [complete] {Boolean} whether to draw the chart completely or keep the graph heidden for later transitioning
+         * @return {MembersChart}
+         */
         render          : function (complete) {
             var chart = this;
-
+            // an interface for retrieving the chart's elements
             this.selection = {
+                // gets all members' elements
                 all         : null,
+                // get all members' of a party by its `id`
                 getParty    : function (id) {
                     if ( !(id in this.parties) ) {
                         this.parties[id] = this.all.filter(function (d, i) {
@@ -904,16 +992,19 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
                     }
                     return this.parties[id];
                 },
+                // get a member by `id`
                 getMember   : function (id) {
                     return this.all.filter(function (d) {
                         return d[8] === id;
                     });
                 },
+                // parties cache
                 parties     : {}
             };
+            // prepare chart
             this.setScales()
                 .createAxes();
-
+            // render elements
             this.selection.all = this.svg.selectAll(this.selector)
                 .data(this.data)
                 .enter()
@@ -924,7 +1015,7 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
                 this.parties_toggle[0] = true;
                 this.select();
             }
-
+            // attach animation events to the chart's events dispatcher
             this.dispatcher.on('start', function (type, selection, out) {
                 if ( type === 'toggle' ) {
                     if ( out ) {
@@ -934,6 +1025,7 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
                                 .attr('height', 0);
                     }
                     else {
+                        //show member's head and torso
                         selection.select('circle')
                                 .attr('r', chart.bar_width / 2);
                         selection.select('polygon')
@@ -950,19 +1042,39 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
                         .style('visibility', 'hidden');
                 }
             });
-
+            // init tooltips
             this.tooltip = Tooltip(this.svg);
             this.persistip = Tooltip(this.svg);
+            // attach chart's events
             this.addEvents();
             return this;
         },
+        /**
+         * Returns a selection of member elements, optionally filtered by a party id or all of them if
+         * no arguments are supplied (will not work like `.select(null, true|false)`).
+         *
+         * @memberof MembersChart
+         * @param [id] {Number} a party id to filter members by
+         * @param [dont_set] {Boolean} whether to set `this.selection.current` the current selection result and persist it
+         * @return {d3.selection}
+         */
         select          : function (id, dont_set) {
             var selection = arguments.length ? this.selection.getParty(id) : this.selection.all;
             if ( ! dont_set ) {
+                // persist the selection to `this.selection.current`
                 this.selection.current = selection;
             }
             return selection;
         },
+        /**
+         * Toggles the state of a selection of members by a party.
+         * This state indicates whether this party is active in view or not.
+         *
+         * @memberof MembersChart
+         * @param party {Number|d3.selection} a party id to filter members by or a party element's selection to get the id from
+         * @param [show_hide] {Boolean} whether to also toggle visibility by calling `show` or `hide`.
+         * @return {MembersChart}
+         */
         toggle          : function (party, show_hide) {
             var id;
             // if party is NOT party_id but a selection
@@ -975,7 +1087,14 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
             }
             return this;
         },
-        single          : function (party, dont_set) {
+        /**
+         * Toggles on members of a single party and off all others.
+         *
+         * @memberof MembersChart
+         * @param party {Number|d3.selection} a party id to filter members by or a party element's selection to get the id from
+         * @return {MembersChart}
+         */
+        single          : function (party) {
             var id, pid;
             // if party is NOT party_id but a selection
             id = typeof party === 'number' ? party : party.data()[0][5];
@@ -983,15 +1102,25 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
             if ( ! this.parties_toggle[id] ) {
                 // toggle off all other parties
                 for ( pid in this.parties_toggle ) {
+                    // loose checking here to allow `String`-`Number` conversion
                     if ( id != pid ) {
                         this.hide(+pid, true);
                     }
                 }
             }
-            // toggle this party
-            this.toggle(id, dont_set);
+            // toggle this party on
+            this.toggle(id, true);
             return this;
         },
+        /**
+         * Toggles visibility on of members of a single party.
+         *
+         * @memberof MembersChart
+         * @param party {Number|d3.selection} a party id to filter members by or a party element's selection to get the id from
+         * @param [override_persist] {Boolean} whether to override the persistent state of the party
+         * @param [callback] {Function} an optional callback for after the transition in
+         * @return {MembersChart}
+         */
         show            : function (party, override_persist, callback) {
             var id;
             // if party is NOT party_id but a selection
@@ -1008,6 +1137,15 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
             }
             return this;
         },
+        /**
+         * Toggles visibility off of members of a single party.
+         *
+         * @memberof MembersChart
+         * @param party {Number|d3.selection} a party id to filter members by or a party element's selection to get the id from
+         * @param [override_persist] {Boolean} whether to override the persistent state of the party
+         * @param [callback] {Function} an optional callback for after the transition in
+         * @return {MembersChart}
+         */
         hide            : function (party, override_persist, callback) {
             var id;
             // if party is NOT party_id but a selection
@@ -1024,6 +1162,16 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
             }
             return this;
         },
+        /**
+         * Animates the transtion of the chart's elements in and out of view.
+         * This method is to be used in the `selection.call(method)` way of invocation.
+         *
+         * @memberof MembersChart
+         * @param selection {d3.selection} a selection over elements in the chart
+         * @param chart {MembersChart} alias for this
+         * @param [transit_out] {Boolean} whether this transition is done into or out of view
+         * @param [callback] {Function} a callback function to be triggered at end of transition
+         */
         transition      : function (selection, chart, transit_out, callback) {
             var count = selection.filter('.volume_over')[0].length, counter = 1,
                 transition = selection.classed('active', ! transit_out).transition()
@@ -1088,6 +1236,16 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
                 chart.dispatcher.end('toggle', selection, transit_out);
             }
         },
+        /**
+         * Toggles chart's zoom level between the absolute scope (-100, 100)
+         * or total members' scope (minimum, maximum) of given scores in case we're in parties view.
+         * In case we're in members view it toggles between absolute and party's scope (minimum, maximu) of
+         * its members.
+         * @memberof MembersChart
+         * @param is_in {Boolean} whether zooming in
+         * @param immediate {Boolean} whether to zoom immediately without transitioning
+         * @return {MembersChart}
+         */
         zoom            : function (is_in, immediate) {
             var chart = this,
                 getScore = prop(0),
@@ -1147,6 +1305,14 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
             }
             return this;
         },
+        /**
+         * Render the members elements in the standard form for when the chart is in the foreground of the view.
+         * Currently not fully implemented and not in use
+         *
+         * @memberof MembersChart
+         * @param [bar_width] {Number} the width of the members' bars - defaults to 8
+         * @return {MembersChart}
+         */
         foreground      : function (bar_width) {
             this.bar_width = bar_width || 8;
             this.member_torso = '0 15,0 1,1 1,1 -1,3 -1,3 1,5 1,5 -1,7 -1,7 1,8 1,8 15';
@@ -1156,6 +1322,15 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
 
             return this;
         },
+        /**
+         * Render the members elements in a lighter form for when the chart is in the background of
+         * another chart, i.e. the parties chart.
+         * Currently not fully implemented and not in use
+         *
+         * @memberof MembersChart
+         * @param [bar_width] {Number} the width of the members' bars - defaults to 4
+         * @return {MembersChart}
+         */
         background      : function (bar_width) {
             this.bar_width = bar_width || 4;
             this.member_torso = '0 15,0 0,4 0,4 15';
@@ -1165,14 +1340,36 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
 
             return this;
         },
+        /**
+         * Shows tooltip.
+         *
+         * @memberof MembersChart
+         * @param data {Object} a single element's data representation
+         * @param element {d3.selection} a single element wrapped as a d3.selection
+         * @param [is_persist] {Boolean} whether this is a persistent tooltip or just the one used for hover effect
+         * @return {MembersChart}
+         */
         showDetails     : function (data, element, is_persist) {
-            if ( this.focused_member === data[8] && ! is_persist ) { return; }
+            // if trying to show the non persistent tooltip of an already focused member bail out
+            if ( this.focused_member === data[8] && ! is_persist ) { return this; }
+            // get content
             var content = data[3],
+                // get the x positino from the transform attribute and add half bar width
                 x = +element.attr('transform').split('(')[1].split(',')[0].replace(/[^\d\.]/g, '') + this.bar_width / 2,
+                // get the y position of the member's head
                 y = element.select('circle').attr('cy');
+            // show the tooltip
             (is_persist ? this.persistip : this.tooltip).showTooltip(content, this.color_scale(data[0]), x | 0, y | 0, data[6]);
             return this;
         },
+        /**
+         * Hides the tooltip(s).
+         *
+         * @memberof MembersChart
+         * @param d {d3.selection.data} a data object of the selected member
+         * @param both {Boolean} whether to also hide the persistent tooltip
+         * @return {MembersChart}
+         */
         hideDetails     : function (d, both) {
             if ( ! d || this.focused_member !== d[8] && both ) {
                 this.persistip.hideTooltip();
@@ -1188,7 +1385,7 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
      * This is esentially the same as {@link MembersChart}.
      *
      * @constructor
-     * @name MembersChart
+     * @name ButtonChart
      * @extends MembersChart
      * @param options {Object} configuration object for the ButtonChart instance
      */
@@ -1216,7 +1413,7 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
          * This method is to be used in the `selection.call(method)` way of invocation.
          *
          * @memberof ButtonChart
-         * @param selection {@link d3.selection} a selection over elements in the chart
+         * @param selection {d3.selection} a selection over elements in the chart
          * @param chart {ButtonChart} alias for this
          */
         renderElement   : function (selection, chart) {
@@ -1286,7 +1483,7 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
          * Since there's no need for a transition here it simply updates the elements accordingly without a transition.
          *
          * @memberof ButtonChart
-         * @param selection {@link d3.selection} a selection over elements in the chart
+         * @param selection {d3.selection} a selection over elements in the chart
          * @param chart {ButtonChart} alias for this
          * @param [transit_out] {Boolean} whether this transition is done into or out of view
          */
@@ -1302,7 +1499,8 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
         /**
          * Toggles chart's zoom level between the absolute scope (-100, 100)
          * or total members' scope (minimum, maximum) of given scores in case we're in parties view.
-         * In case we're in members view it toggles between absolute and parties' scope (minimum, maximu of
+         * In case we're in members view it toggles between absolute and party's scope (minimum, maximu) of
+         * its members.
          *
          * @memberof ButtonChart
          * @param is_in {Boolean} whether zooming in

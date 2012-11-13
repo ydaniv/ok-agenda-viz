@@ -151,7 +151,7 @@ define(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When) {
                             parties_chart.selection.all.attr('fill-opacity', function (d) {
                                 return d[4] != party_id ? 0 : .4;
                             });
-                            members_chart.single(party_id, true);
+                            members_chart.single(party_id);
                         }
                     },
                     no_axes     : true
