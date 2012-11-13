@@ -1,5 +1,6 @@
 define(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When) {
 
+    // polyfill for `Object.create` if needed
     if (!Object.create) {
         Object.create = function (proto, props) {
             function F () {}
@@ -7,19 +8,25 @@ define(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When) {
             return new F();
         }
     }
+    // cache d3 namespace to this scope
     var d3 = window.d3,
+        // some globals
         BASE_URL = 'http://oknesset.org',
+        // get the id of the agenda to show from the URL's query params or default to 2
         agenda_id = (function () {
             var match = window.location.search.match(/agenda_id=(\d+)/i);
             return (match && match[1]) || 2;
         }()),
+        // check whether we need to hijack click on members and do postMessage instead of opening their view on Open-Knesset site
         OVERRIDE_MEMBERS_CLICK = !!window.location.search.match(/memberjack=1/i),
+        // the host of the parent to call postMessage to
         HOSTNAME = (function () {
             var match = window.location.search.match(/hostname=([^&]*)/i),
                 res = (match && match[1]) || null;
             return res ? decodeURIComponent(res) : res;
         }()),
         initial_party = null,
+        // check URL's hash for an initial state of focusing a member or a party
         initial_member = (function () {
             var hash = window.location.hash;
             if ( /member_\d+/.test(hash) ) {
@@ -30,26 +37,46 @@ define(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When) {
             }
             return null;
         }()),
+        // for use in the embed overlay
         embed_snippet = '<iframe width="600" height="400" src="' + window.location.href + '"></iframe>',
+        /**
+         * Abstract Model class for all charts' data.
+         *
+         * @name Model
+         */
         Model = {
+            /**
+             * Gets data via a JSONP call.
+             *
+             * @memberof {Model}
+             * @param url {String} URL to use for the JSONP call
+             * @param [refresh] {Boolean} whether to force a refresh of cache
+             * @return {Promise}
+             */
             get : function (url, refresh) {
                 var deferred = When.defer(),
                     that = this,
+                    // get from cache
                     cache = this.cache(url);
+                // if we have cache
                 if ( cache ) {
                     if ( refresh ) {
-                        this.cache(url, null); // clear this from cache
+                        // clear this from cache
+                        this.cache(url, null);
                     } else {
+                        // use cache
                         deferred.resolve(cache);
                         return deferred.promise;
                     }
                 }
                 //TODO: consider using d3.xhr
+                // make the request
                 Reqwest({
                     url     : url,
                     type    : 'jsonp',
                     success : function (response) {
                         window.console && console.log(response);
+                        // cache results
                         that.cache(url, response);
                         deferred.resolve(response);
                     },
@@ -62,6 +89,18 @@ define(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When) {
                 });
                 return deferred.promise;
             },
+            /**
+             * Gets or sets data to localStorage via JSON API.
+             * It's all wrapped in a `try catch` clause so just won't happen on non-standard browsers. Tough luck!
+             * If `data` is not supplied it will get the value of `key`.
+             * If `data` is `null` it will delete it.
+             * If `data` is supplied and not `null` it will attempt to store it under `key`.
+             *
+             * @memberof {Model}
+             * @param key {String} URL to use for the JSONP call
+             * @param [data] {*|null} JSON serializable data or `null` to delete
+             * @return {Promise}
+             */
             cache   : function (key, data) {
                 try {
                     if ( arguments.length === 1 ) {
@@ -74,15 +113,20 @@ define(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When) {
                             localStorage.setItem(key, JSON.stringify(data));
                         }
                     }
-                } catch (e) {}
+                } catch (e) {
+                    // don't care
+                }
             }
         },
+        // instantiate models
         Parties = Object.create(Model),
         Agenda = Object.create(Model),
         Members = Object.create(Model),
+        // cache some DOM references
         embed_overlay = d3.select('#embed-overlay'),
         share_overlay = d3.select('#share-overlay'),
         help_overlay = d3.select('#help-overlay'),
+        // overlays states
         embed_overlay_on = false,
         share_overlay_on = false,
         about_overlay_on = false,
@@ -91,13 +135,16 @@ define(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When) {
         window_height = document.body ? document.body.clientHeight : window.innerHeight,
         window_width = document.body ? document.body.clientWidth : window.innerWidth;
 
+    // JS files are loaded, change loader state to "loading data..."
     d3.select('#loader-message').text('טוען נתונים...');
     // when.js also wraps the resolved and rejected calls in `try-catch` statements
     When.all(
         [Parties.get('http://oknesset.org/api/v2/party/?callback=?'),
             Agenda.get('http://oknesset.org/api/v2/agenda/' + agenda_id + '/?callback=?', true),
             Members.get('http://oknesset.org/api/v2/member/?callback=?')],
+        // do magic!
         function (responses) {
+            // get all the data we need
             var parties = responses[0],
                 agenda = responses[1],
                 members = responses[2],
@@ -120,8 +167,11 @@ define(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When) {
                         }
                     });
                 }), agenda.members),
+                // widget's events dispatcher
                 dispatcher = d3.dispatch('change_party', 'change_hash'),
+                // flag for recognizing touch events so that if we get a false positive on touch support it won't fire handlers twice
                 parties_touches = 0,
+                // init PartiesChart
                 parties_chart = new Charts.PartiesChart({
                     data        : parties_data,
                     container   : '#charts',
@@ -156,6 +206,11 @@ define(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When) {
                     },
                     no_axes     : true
                 }),
+                // wrap some handlers for re-use
+                /**
+                 *  Handles zooming into a party.
+                 *  Toggles view state to members view, hides parties and shows members of that party
+                 */
                 enterPartyHandler = function (party_id, el) {
                     dispatcher.change_hash(party_id);
                     parties_chart.toggleEvents(false);
@@ -164,6 +219,9 @@ define(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When) {
                     parties_menu.property('value', party_id);
                     dispatcher.change_party(party_id);
                 },
+                /**
+                 *  Handles opening a member's agenda page on Open-Knesset site or postMessage if required.
+                 */
                 openMemberHandler = function (member) {
                     if ( OVERRIDE_MEMBERS_CLICK && HOSTNAME ) {
                         parent.postMessage(member[8], HOSTNAME);
@@ -172,6 +230,7 @@ define(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When) {
                     }
                 },
                 members_touches = 0,
+                // init MembersChart
                 members_chart = new Charts.MembersChart({
                     data        : members_data,
                     container   : '#charts',
@@ -203,6 +262,11 @@ define(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When) {
                         selectMemberHandler(member, this);
                     }
                 }),
+                // wrapping handlers for re-use
+                /**
+                 *  Handles a selection of a member to be focused.
+                 *  Opens its persistent tooltip and so on.
+                 */
                 selectMemberHandler = function (member, el) {
                     var member_id = member[8], _member, last_member;
                     if ( ! el ) {
@@ -239,6 +303,9 @@ define(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When) {
                             .attr('xlink:href', '/src/img/icons/i_link.png');
                     }
                 },
+                /**
+                 *  Clears selection of focused member.
+                 */
                 clearMemberSelection = function () {
                     var last_member = members_chart.selection.getMember(members_chart.focused_member);
                     if ( /member_\d+/.test(window.location.hash) ) {
@@ -250,13 +317,16 @@ define(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When) {
                     // hide both tooltips
                     members_chart.hideDetails(last_member.data(), true);
                 },
+                // set view state
                 parties_view = ! initial_member,
+                // get top 5 important votes for viewing in the "about" section
                 votes = agenda.votes.slice(0)
                         .sort(function (a, b) {
                             return a.importance === b.importance ? 0 :
                                     a.importance < b.importance ? -1 : 1;
                         }).slice(0, 5);
 
+            // add a `change_party` handler
             dispatcher.on('change_party', function (party_id) {
                 var is_all = !+party_id,
                     zoom_out = function () {
@@ -303,29 +373,39 @@ define(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When) {
                 // clear party selection if needed
                 dispatcher.change_hash(is_all ? '' : party_id, false);
             });
+            // add a `change_hash` handler
             dispatcher.on('change_hash', function (hash, is_member) {
+                // match the `src` attribute with its value in the snippet
                 var match = embed_snippet.match(/src="[^#]+(#?.*)"/),
                     id = is_member && hash,
                     share_url;
+                // generate new hash
                 hash = hash ?
                     is_member ?
                         '#member_' + hash :
                         '#party_' + hash :
                     '';
+                // generate a new sharing URL
                 share_url = BASE_URL + agenda.absolute_url + (hash && is_member ? 'member/' + id + '/' : '');
+                // set window hash
                 window.location.hash = hash;
+                // if there's a concrete match
                 if ( match && match[1] ) {
+                    // update the embed HTML snippet
                     embed_snippet = !!match[1] ?
                                         embed_snippet.replace(match[1], hash) :
                                         embed_snippet.replace(match[0], match[0] + hash);
                 }
                 else {
+                    // otherwise, there was no initial hash in the `src`, just add the new one
                     embed_snippet = embed_snippet.replace(/src="([^"]*)"/, 'src="$1' + hash + '"')
                 }
+                // change `value` properties of embed and share text inputs
                 d3.select('#embed-snippet').property('value', embed_snippet);
                 d3.select('#share-snippet').property('value', share_url);
                 
             });
+            // fill the parties `select` with `option`s of parties
             // IE can't set innerHTML of select, need to use the .options.add interface
             if ( typeof parties_menu[0][0].options.add == 'function' ) {
                 parties_menu[0][0].options.add(function () {
@@ -351,11 +431,15 @@ define(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When) {
                     return html + '<option value="' + item.id + '">' + item.name + '</option>';
                 }, '<option value="0">כל המפלגות</option>'));
             }
+            // add a listener to the `change` event
             parties_menu.on('change', function (d) {
+                // trigger `change_party` handler
                 dispatcher.change_party(d3.event.target.value);
             });
 
+            // add a listener to `click` event on the zoom button
             toggle_zoom.on('click', function (d) {
+                // according to view state
                 if ( parties_view ) {
                     parties_chart.zoom();
                     members_chart.zoom(parties_chart.zoom_in ? 'all' : false);
@@ -426,6 +510,7 @@ define(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When) {
                     .transition().duration(300)
                         .style('height', toggle ? '60px' : '0px')
             };
+            // creates a *dynamic* tweet button according to viewed agenda and party/member selection
             var tweeterHandler = function () {
                 // create a new dynamic tweeter
                 var share_url = d3.select('#share-snippet').property('value'),
@@ -445,12 +530,15 @@ define(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When) {
                 // re-get the twitter widgets script
                 script = document.createElement('script');
                 current_script && document.head.removeChild(current_script);
+                // reload the twitter/widgets script to get it re-initialize the button
+                // it will just fetch it from cache but the result is the same
                 script.src = 'http://platform.twitter.com/widgets.js';
                 script.id = script_id;
                 script.async = true;
 //                script.setAttribute('data-time', Date.now());
                 document.head.appendChild(script);
             };
+            // bunch of handlers to handle overlays states and toggling them
             var embedHandler = function () {
                 var h = embed_overlay_on ? '0%' : '100%';
                 if ( share_overlay_on ) {
@@ -550,33 +638,49 @@ define(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When) {
 
             // handle initial state
             if ( member ) {
+                // this is a focused member state
                 parties_view = false;
+                // render parties and members
                 parties_chart.render();
                 members_chart.render();
+                // select the member's party
                 parties_menu.property('value', member.party_id);
+                // select the member's party and show it
                 //# Array.prototype.filter
                 members_chart.show(member.party_id, true, function () {
                     selectMemberHandler(members_chart.selection.getMember(initial_member).data()[0]);
                 });
+                // zoom in to members chart
                 members_chart.zoom(true, true);
+                // disable events on parties chart
                 parties_chart.toggleEvents(false);
                 // set zoom button state
                 button_chart.select().call(button_chart.transition, button_chart, true);
                 button_chart.show(member.party_id, true).zoom(false);
             } else if ( initial_party ) {
+                // this is a party state, meaning a members view of an entire party
                 parties_view = false;
+                // render charts
                 parties_chart.render();
                 members_chart.render();
+                // select the party
                 parties_menu.property('value', initial_party);
+                // show its members
                 members_chart.show(initial_party, true);
+                // disable events on parties chart
                 parties_chart.toggleEvents(false);
                 // set zoom button state
                 button_chart.select().call(button_chart.transition, button_chart, true);
                 button_chart.show(initial_party, true).zoom(true);
             } else {
+                // no initial state
+                // this is parties view state
                 parties_view = true;
+                // completely draw parties chart
                 parties_chart.draw();
+                // render members
                 members_chart.render();
+                // zoom in in button chart
                 button_chart.zoom('all');
             }
 
