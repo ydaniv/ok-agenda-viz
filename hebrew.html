@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset='utf-8' />
+    <meta http-equiv="X-UA-Compatible" content="chrome=1" />
+    <meta name="description" content="ווידג'ט ויזואלוזציה לכלי האג'נדות של הכנסת הפתוחה" />
+
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+
+    <title>ווידג'ט האג'נדות</title>
+</head>
+
+<body>
+
+<!-- HEADER -->
+<div id="header_wrap" class="outer">
+    <header class="inner">
+        <a id="forkme_banner" href="https://github.com/ydaniv/ok-agenda-viz">View on GitHub</a>
+
+        <h1 id="project_title">ווידג'ט האג'נדות</h1>
+        <h2 id="project_tagline">ווידג'ט ויזואלוזציה לכלי האג'נדות של הכנסת הפתוחה</h2>
+
+        <section id="downloads">
+            <a class="zip_download_link" href="https://github.com/ydaniv/ok-agenda-viz/zipball/master">Download this project as a .zip file</a>
+            <a class="tar_download_link" href="https://github.com/ydaniv/ok-agenda-viz/tarball/master">Download this project as a tar.gz file</a>
+        </section>
+    </header>
+</div>
+
+<!-- MAIN CONTENT -->
+<div id="main_content_wrap" class="outer">
+    <section id="main_content" class="inner">
+        <p><a href="http://oknesset.org/">Open-Knesset Site</a></p>
+
+        <h2>מבט על</h2>
+
+        <p>מערכת האג'נדות מאפשרת לעקוב אחרי דפוסי הצבעה של חברי הכנסת בנושאים שונים. עורכי האג'נדות - גופים, עמותות ויחידים, מגדירים הצבעות על הצעות חוק כתומכים או נוגדים את האג'נדה אותה הם מקדמים, והמערכת מציגה את המגמות העולות מאופני ההצבעה של הח"כים בהתאם.</p>
+
+        <p>הווידג'ט מהווה ויזואליזציה של אג'נדה ומראה את פעילות החקיקה של המפלגות וחברי הכנסת על פיה.</p>
+
+        <h2>אימפלמנטציה</h2>
+
+        <p>הקוד מורכב מ - 3 קבצים:</p>
+        <ol>
+            <li>agenda-viz: איתחול של המצב של הויזואליזציה, איתחול הגרפים ויצירה שלהם. כמו כן, מגדיר את ההתנהגות של כל הרכיבים הנלווים שסביב הגרפים עצמם.</li>
+            <li>agenda-charts: הגדרות של מחלקות הגרפים ומימושן.</li>
+            <li>agenda-tooltips: מימוש של טולטיפ מבוסס SVG.</li>
+        </ol>
+
+        <h3>אופן פעולה</h3>
+        
+        <p>
+            הקובץ הראשון ברשימה הנ"ל נטען בעזרת איתחול של טוען המודולים בדף ה HTML.
+            הוא טוען לתוכו את כל הספריות הנחוצות ואת שני הקבצים הנוספים ברשימה.
+            המצב ההתחלתי של הווידג'ט נקבע לפי ה URL. פוקוס על מפלגה או חבר נקבע לפי ה"האש" והאג'נדה עצמה לפי פרמטר שנקרא <code>agenda_id</code>
+            על פי פרמטרים אלו מרונדרים הגרפים ונקבע מצב הזום ההתחלתי.
+        </p>
+
+
+        <h2>טכנולוגיות בשימוש</h2>
+
+        <ul>
+            <li><a href="http://http://d3js.org/">d3 - Data Driven Documents</a>: תשתית ליצירת ויזואליזציות מבוססות SVG ו HTML למידע.</li>
+            <li><a href="https://github.com/ded/reqwest">Reqwest - browser asynchronous http requests</a>: מעטפת לשליחת בקשות JSONP.</li>
+            <li><a href="https://github.com/cujos/when">When.js - A lightweight Promise and when() implementation</a>: מימוש של ממשק ההבטחות על פי CommonJS Promises/A.</li>
+            <li><a href="http://http://requirejs.org/">require.js - A JavaScript module loader</a>: טוען קבצים ומודולים על פי הגדרת AMD.</li>
+        </ul>
+
+        <h2>עמידה בקריטריונים לתחרות הויזואליזציה של HTML5FEST</h2>
+        
+        <dl>
+            <dt>שימוש ב HTML5</dt>
+            <dd>
+                <p>לשם מימוש הווידג'ט נעשה שימוש נרחב בטכנולוגית ה SVG, מלבד האסבסטרקציה שנותנת ספרית d3, נעשה שימוש בפוליגונים וגראדיינטים.</p>
+                <p>כמו כן נעשה שימוש בממשקי localStorage ו postMessage, הקוד משתמש בצורה נרחבת במימושים החדשים של CSS3 ו ES5.</p>
+            </dd>
+            
+            <dt>הנגשת נתונים</dt>
+            <dd>
+                המימוש תומך בכל תשתית שמרנדרת SVG, החל מכל הדפדפנים המודרניים וכלה מכשירים ניידים עם ממשק מגע.
+                המידע מגיע הישר ממשק הכנסת הפתוחה ומתחדש בכל פעם בהתאם לעדכונים של האג'נדה על האתר.
+                כל החומר מקושר לאתר כנסת פתוחה, כולל דפי הח"כים בכלי האג'נדות באתר.
+            </dd>
+            
+            <dt>חדשנות ומקוריות</dt>
+            <dd>
+                <p>העיצוב החדשני והמגניב של מושון זר-אביב! מלבד זאת, חלקים רבים שדורשים ציור של צורות וקווים "ידנית" לשם יצירת הויזואליזציה.
+                אתגר טכנולוגי ראוי לציון הוא כפתור הזום שבפינה השמאלית של הווידג'ט. על פי העיצוב של מושון כפתור זה הוא למעשה גרסה מוקטנת
+                של גרף חברי הכנסת שמצייר את ההתפלגות של התצוגה הנוכחית במצב הזום ההפוך למצב הנוכחי.
+                הכפתור אכן ממומש כמחלקה שיורשת את המחלקה שמגדירה את גרף הח"כים והוא אכן מתרנדר בזמן אמת בהתאם למצב התצוגה.</p>
+                <p>בנוסף הווידג'ט גם מאפשר עימבוד באתרים חיצוניים ושיתוף ויראלי באמצעות כפתור טוויטר דינאמי.</p>
+                <p>נעשה גם שימוש בטכנולוגית postMessage על מנת לאפשר לאתרים מעמבדים לשנות תצוגה פנימית בהתאם לח"כ שנבחר במקום פתיחה של דפ הח"כ.</p>
+                <p>לשם אופטימיזציה נעשה שימוש בטכנולוגית localStorage ששומר את נתוני הח"כים והמפלגות מקומית לאחר בקשה ראשונה.</p>
+                <p></p>
+            </dd>
+            
+            <dt>תיעוד</dt>
+            <dd>הקוד כולו מתועד שורה-שורה בהסברים מפורטים, מלבד לתיעוד הסטנדרטי של כל מחלקה ומתודה.</dd>
+        </dl>
+
+<!-- FOOTER  -->
+<div id="footer_wrap" class="outer">
+    <footer class="inner">
+        <p class="copyright">ok-agenda-viz maintained by <a href="https://github.com/ydaniv">ydaniv</a></p>
+        <p>Published with <a href="http://pages.github.com">GitHub Pages</a></p>
+    </footer>
+</div>
+
+
+
+</body>
+</html>
