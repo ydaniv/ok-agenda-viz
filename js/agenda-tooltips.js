@@ -11,6 +11,14 @@ define(function () {
             return val > _ciel ? _ciel : val;
         };
 
+    /**
+     * Tooltip class.
+     * A tooltip renedred in SVG.
+     *
+     * @constructor
+     * @name Tooltip
+     * @param svg {SVGSVGElement} the `svg` element to attach the tooltip to
+     */
     function Tooltip (svg) {
         if ( ! (this instanceof Tooltip) ) return new Tooltip(svg);
 
@@ -44,6 +52,7 @@ define(function () {
         this.hideTooltip();
     }
 
+    /** {@link Tooltip} class inheritable properties and methods */
     Tooltip.prototype = {
         constructor     : Tooltip,
         showTooltip     : function (content, color, x, y, image, alter_y) {
