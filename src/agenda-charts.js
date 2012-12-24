@@ -1077,8 +1077,8 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
          */
         toggle          : function (party, show_hide) {
             var id;
-            // if party is NOT party_id but a selection
-            id = typeof party === 'number' ? party : party.data()[0][5];
+            // if party is NOT a selection it's a party_id
+            id = party && party.data ? party.data()[0][5] : +party;
             // toggle state
             this.parties_toggle[id] = ! this.parties_toggle[id];
             // whether to also turn on/off visual state
@@ -1096,8 +1096,8 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
          */
         single          : function (party) {
             var id, pid;
-            // if party is NOT party_id but a selection
-            id = typeof party === 'number' ? party : party.data()[0][5];
+            // if party is NOT a selection it's a party_id
+            id = party && party.data ? party.data()[0][5] : +party;
             // if toggling this party to 'on'
             if ( ! this.parties_toggle[id] ) {
                 // toggle off all other parties
@@ -1123,8 +1123,8 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
          */
         show            : function (party, override_persist, callback) {
             var id;
-            // if party is NOT party_id but a selection
-            id = typeof party === 'number' ? party : party.data()[0][5];
+            // if party is NOT a selection it's a party_id
+            id = party && party.data ? party.data()[0][5] : +party;
             // get old state
             // if we're allowed to toggle the persistent state or it's not persistent
             if ( override_persist || ! this.parties_toggle[id] ) {
@@ -1148,8 +1148,8 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
          */
         hide            : function (party, override_persist, callback) {
             var id;
-            // if party is NOT party_id but a selection
-            id = typeof party === 'number' ? party : party.data()[0][5];
+            // if party is NOT a selection it's a party_id
+            id = party && party.data ? party.data()[0][5] : +party;
             // get old state
             // if we're allowed to toggle the persistent state or it's not persistent
             if ( override_persist || ! this.parties_toggle[id] ) {
