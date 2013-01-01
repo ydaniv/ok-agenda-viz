@@ -1,4 +1,4 @@
-define(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When) {
+requirejs(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When) {
 
     // polyfill for `Object.create` if needed
     if (!Object.create) {
