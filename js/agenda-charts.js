@@ -488,7 +488,7 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
                     party.volume | 0,//1
                     party.size | 0,  //2
                     party.name,      //3
-                    party.id         //4
+                    +party.id        //4
                 ];
             }).sort(function (a, b) {
                     // sort from the large to the small ones, to make sure they don't cover each other entirely
@@ -819,10 +819,10 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
                     member.rank,        //2
                     member.name,        //3
                     member.party,       //4
-                    member.party_id,    //5
+                    +member.party_id,   //5
                     member.img_url,     //6
                     member.absolute_url,//7
-                    member.id           //8
+                    +member.id          //8
                 ];
             }).sort(function (a, b) {
                     // sort from the higher to the lower ones, to make sure they don't cover each other entirely
