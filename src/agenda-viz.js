@@ -12,6 +12,7 @@ requirejs(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When)
     var d3 = window.d3,
         // some globals
         BASE_URL = 'http://oknesset.org',
+        IMAGES_PATH = window.IMAGES_PATH || '/src/img/',
         // get the id of the agenda to show from the URL's query params or default to 2
         agenda_id = (function () {
             var match = window.location.search.match(/agenda_id=(\d+)/i);
@@ -300,7 +301,7 @@ requirejs(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When)
                             .attr('y', _member.select('circle').attr('r', 0).attr('cy') - 8)
                             .attr('width', 14)
                             .attr('height', 14)
-                            .attr('xlink:href', '/src/img/icons/i_link.png');
+                            .attr('xlink:href', IMAGES_PATH + 'icons/i_link.png');
                     }
                 },
                 /**

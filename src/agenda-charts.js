@@ -1,4 +1,7 @@
 define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
+
+    var IMAGES_PATH = window.IMAGES_PATH || '/src/img/';
+
     // polyfill Object.create if needed
     if (!Object.create) {
         Object.create = function (proto, props) {
@@ -259,7 +262,7 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
                         .attr('y', this.y_out_min - 4)
                         .attr('width', 10)
                         .attr('height', 10)
-                        .attr('xlink:href', '/src/img/icons/i_minus.png');
+                        .attr('xlink:href', IMAGES_PATH + 'icons/i_minus.png');
                     // 'against' label
                     color_axis.append('text')
                         .style('direction', 'ltr')
@@ -277,7 +280,7 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
                         .attr('y', this.y_out_min - 4)
                         .attr('width', 10)
                         .attr('height', 10)
-                        .attr('xlink:href', '/src/img/icons/i_plus.png');
+                        .attr('xlink:href', IMAGES_PATH + 'icons/i_plus.png');
                     // 'for' label 
                     color_axis.append('text')
                         .style('direction', 'ltr')
