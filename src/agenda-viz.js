@@ -139,9 +139,9 @@ requirejs(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When)
     d3.select('#loader-message').text('טוען נתונים...');
     // when.js also wraps the resolved and rejected calls in `try-catch` statements
     When.all(
-        [Parties.get('http://oknesset.org/api/v2/party/?callback=?'),
-            Agenda.get('http://oknesset.org/api/v2/agenda/' + agenda_id + '/?callback=?', true),
-            Members.get('http://oknesset.org/api/v2/member/?callback=?')],
+        [Parties.get('http://api.oknesset.org/api/v2/party/?callback=?'),
+            Agenda.get('http://api.oknesset.org/api/v2/agenda/' + agenda_id + '/?callback=?', true),
+            Members.get('http://api.oknesset.org/api/v2/member/?callback=?')],
         // do magic!
         function (responses) {
             // get all the data we need
