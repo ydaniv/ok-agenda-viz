@@ -383,26 +383,26 @@
     <!--[if lte IE 8]>
     <script>
         var IE8_COMPAT_MODE = true;
-        requirejs.config({
+        var require = {
             deps    : ['lib/ie8/compat', 'lib/ie8/sizzle'],
             paths   : {
                 'd3' : '../lib/ie8/r2d3',
                 reqwest : '../lib/reqwest',
                 when    : '../lib/when'
             }
-        });
+        };
     </script>
     <![endif]-->
     <!--[if IE 9]><!-->
     <script>
         var IE8_COMPAT_MODE = false;
-        requirejs.config({
+        var require = {
             paths   : {
                 'd3' : '../lib/d3.v2',
                 reqwest : '../lib/reqwest',
                 when    : '../lib/when'
             }
-        });
+        };
     </script>
     <!--<![endif]-->
     <script src="/lib/require.js" data-main="src/agenda-viz.js"></script>
