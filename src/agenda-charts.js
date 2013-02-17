@@ -262,7 +262,7 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
                         .attr('y', this.y_out_min - 4)
                         .attr('width', 10)
                         .attr('height', 10)
-                        .attr('xlink:href', IMAGES_PATH + 'icons/i_minus.png');
+                        .attr('xlink:href', IMAGES_PATH + 'i_minus.png');
                     // 'against' label
                     color_axis.append('text')
                         .style('direction', 'ltr')
@@ -280,7 +280,7 @@ define(['d3', 'agenda-tooltips'], function (disregard, Tooltip) {
                         .attr('y', this.y_out_min - 4)
                         .attr('width', 10)
                         .attr('height', 10)
-                        .attr('xlink:href', IMAGES_PATH + 'icons/i_plus.png');
+                        .attr('xlink:href', IMAGES_PATH + 'i_plus.png');
                     // 'for' label 
                     color_axis.append('text')
                         .style('direction', 'ltr')

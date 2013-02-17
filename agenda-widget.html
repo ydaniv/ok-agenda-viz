@@ -43,7 +43,7 @@
             width: 26px;
             /*height: 60px;*/
             height: 0;
-            background: #09f url('icons/agenda-embed-X.png') center 40px no-repeat;
+            background: #09f url('agenda-embed-X.png') center 40px no-repeat;
             cursor: pointer;
         }
         .hide {
@@ -145,10 +145,10 @@
             height: 100%;
         }
         #color-axis-minus {
-            background: url('icons/i_minus.png') left top no-repeat;
+            background: url('i_minus.png') left top no-repeat;
         }
         #color-axis-plus {
-            background: url('icons/i_plus.png') left top no-repeat;
+            background: url('i_plus.png') left top no-repeat;
         }
         #parties-canvas {
             z-index: 10;
@@ -173,7 +173,7 @@
                 -ms-appearance: none;
                  -o-appearance: none;
             padding: 0 8px 0px 25px;
-            background-image: url('img/icons/i_drop.png');
+            background-image: url('i_drop.png');
             background-position: 7px 55%;
             background-repeat: no-repeat;
             font-family: openfont, sans-serif;
@@ -275,7 +275,7 @@
             float: right;
             margin-right: 0;
             line-height: 20px;
-            background: url('icons/agenda-embed-help.png') 97% 2px no-repeat;
+            background: url('agenda-embed-help.png') 97% 2px no-repeat;
         }
         #footer-info p {
             display: inline-block;
@@ -292,7 +292,7 @@
             float: left;
             padding: 0 10px 0 28px;
             line-height: 20px;
-            background: url('icons/i_embed.png') 10px 3px no-repeat;
+            background: url('i_embed.png') 10px 3px no-repeat;
             border-right: 1px solid #65BAF7;
             border-left: 1px solid #65BAF7;
         }
@@ -300,7 +300,7 @@
             float: left;
             padding: 0 15px 0 28px;
             line-height: 20px;
-            background: url('icons/i_share.png') 10px 3px no-repeat;
+            background: url('i_share.png') 10px 3px no-repeat;
         }
         #embed-link:hover, #share-link:hover {
             cursor: pointer;
@@ -391,6 +391,7 @@
                 when    : '../lib/when'
             }
         };
+        window.IMAGES_PATH = document.querySelector('base').getAttribute('href');
     </script>
     <![endif]-->
     <!--[if IE 9]><!-->
@@ -403,6 +404,7 @@
                 when    : '../lib/when'
             }
         };
+        window.IMAGES_PATH = document.querySelector('base').getAttribute('href');
     </script>
     <!--<![endif]-->
     <script src="/lib/require.js" data-main="src/agenda-viz.js"></script>
