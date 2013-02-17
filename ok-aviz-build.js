@@ -9,5 +9,5 @@
     optimizeCss     : 'none',
     removeCombined  : false,
     name            : 'agenda-viz',
-    out             : './dist/agenda-viz-1.0.js' 
+    out             : './dist/agenda-viz-1.0.1.js' 
 })
