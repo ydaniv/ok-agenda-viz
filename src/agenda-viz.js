@@ -149,12 +149,23 @@ requirejs(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When)
             var parties = responses[0],
                 agenda = responses[1],
                 members = responses[2],
+                fnLookupByField = function(inputArray,field) {
+                    var resultLookup = {};
+                    //# Array.prototype.map
+                    inputArray.forEach(function (el) {
+                        resultLookup[el[field]] = el;
+                    });
+                    return resultLookup;
+                },
+                membersByURL = fnLookupByField(members.objects,'absolute_url'),
+                partiesByURL = fnLookupByField(parties.objects,'absolute_url'),
                 parties_menu = d3.select('#parties-menu'),
                 toggle_zoom = d3.select('#toggle-zoom'),
                 //# Array.prototype.map
                 parties_data = agenda.parties.map(function (item, i) {
-                    item.size = parties.objects[i].number_of_seats;
-                    item.id = parties.objects[i].id;
+                    var party = partiesByURL[item.absolute_url];
+                    item.size = party.number_of_seats;
+                    item.id = party.id;
                     return item;
                 }),
                 //# Array.prototype.forEach
@@ -162,9 +173,10 @@ requirejs(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When)
                     //# Array.prototype.forEach
                     agenda.members.forEach(function (member, i) {
                         if ( party.name === member.party ) {
+                            var lkpMember = membersByURL[member.absolute_url];
                             member.party_id = party.id;
-                            member.img_url = members.objects[i].img_url;
-                            member.id = members.objects[i].id;
+                            member.img_url = lkpMember.img_url;
+                            member.id = lkpMember.id;
                         }
                     });
                 }), agenda.members),
