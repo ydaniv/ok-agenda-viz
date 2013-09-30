@@ -8,10 +8,13 @@ requirejs(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When)
             return new F();
         }
     }
+
     // cache d3 namespace to this scope
     var d3 = window.d3,
         // some globals
-        BASE_URL = 'http://oknesset.org',
+        // BASE_URL = 'http://oknesset.org',
+        BASE_URL = 'http://localhost:8000',
+        OKNESSET_URL = 'http://localhost:8000',
         IMAGES_PATH = window.IMAGES_PATH || '/src/img/',
         // get the id of the agenda to show from the URL's query params or default to 2
         agenda_id = (function () {
@@ -138,11 +141,17 @@ requirejs(['agenda-charts', 'reqwest', 'when'], function (Charts, Reqwest, When)
 
     // JS files are loaded, change loader state to "loading data..."
     d3.select('#loader-message').text('טוען נתונים...');
+
+    // verify that an API_BASE_URL has been set
+    if (!window.API_BASE_URL) {
+        throw new Error('API_BASE_URL is not defined');
+    }
+
     // when.js also wraps the resolved and rejected calls in `try-catch` statements
     When.all(
-        [Parties.get('http://api.oknesset.org/api/v2/party/?callback=?'),
-            Agenda.get('http://api.oknesset.org/api/v2/agenda/' + agenda_id + '/?callback=?', true),
-            Members.get('http://api.oknesset.org/api/v2/member/?callback=?')],
+        [Parties.get(window.API_BASE_URL+'api/v2/party/?knesset=all&callback=?'),
+            Agenda.get(window.API_BASE_URL+'api/v2/agenda/' + agenda_id + '/?callback=?', true),
+            Members.get(window.API_BASE_URL+'api/v2/member/?callback=?')],
         // do magic!
         function (responses) {
             // get all the data we need
